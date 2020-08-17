@@ -1,9 +1,11 @@
 [package]
 name = "drand-verify"
+description = "A drand verification library."
 version = "0.1.0"
 authors = ["Simon Warta <simon@warta.it>"]
 edition = "2018"
 license = "Apache-2.0"
+repository = "https://github.com/CosmWasm/drand-verify"
 
 [lib]
 crate-type = ["cdylib", "rlib"]

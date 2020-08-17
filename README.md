@@ -1,5 +1,7 @@
 # drand verify
 
+A [drand](https://drand.love/) verification library in Rust.
+
 ## Build for JS
 
 In order to keep the JS/Wasm interface simple, there is a wrapper in the module `verify_js.rs` which takes
@@ -40,3 +42,7 @@ $ ls ./pkg
 ```
 
 for browsers. Please refer to the wasm-bindgen handbook [to learn more about targets](https://rustwasm.github.io/docs/wasm-bindgen/reference/deployment.html).
+
+## License
+
+Apache 2.0, see [LICENSE](./LICENSE) and [NOTICE](./NOTICE)
