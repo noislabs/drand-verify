@@ -1,7 +1,7 @@
 # drand verify
 
 A [drand](https://drand.love/) verification library in Rust.
-This can be used by other crates or compiled to a Wasm blob (< 500 kilobytes) with JavaScript bindings.
+This can be used by other crates or be compiled to a Wasm blob (< 500 kilobytes) with JavaScript bindings.
 
 ## Development
 
