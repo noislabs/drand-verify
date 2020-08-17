@@ -1,22 +1,50 @@
 use paired::bls12_381::{G1Affine, G2Affine, G2};
 use paired::{CurveAffine, CurveProjective, ExpandMsgXmd, HashToCurve, PairingCurveAffine};
 use sha2::{Digest, Sha256};
+use std::fmt;
 
 const DOMAIN: &[u8] = b"BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_NUL_";
 
 use super::points::g2_from_variable;
 
+pub enum VerificationError {
+    InvalidPoint { field: String, msg: String },
+}
+
+impl fmt::Display for VerificationError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            VerificationError::InvalidPoint { field, msg } => {
+                write!(f, "Invalid point for field {}: {}", field, msg)
+            }
+        }
+    }
+}
+
 // Verify checks beacon components to see if they are valid.
-pub fn verify(pk: &G1Affine, round: u64, previous_signature: &[u8], signature: &[u8]) -> bool {
+pub fn verify(
+    pk: &G1Affine,
+    round: u64,
+    previous_signature: &[u8],
+    signature: &[u8],
+) -> Result<bool, VerificationError> {
     let g1 = G1Affine::one();
-    let sigma = g2_from_variable(signature);
+    let sigma = match g2_from_variable(signature) {
+        Ok(sigma) => sigma,
+        Err(err) => {
+            return Err(VerificationError::InvalidPoint {
+                field: "signature".into(),
+                msg: err.to_string(),
+            })
+        }
+    };
 
     let msg = message(round, previous_signature);
     let msg_on_g2 = msg_to_curve(&msg);
 
     let lhs = g1.pairing_with(&sigma);
     let rhs = pk.pairing_with(&msg_on_g2);
-    lhs == rhs
+    Ok(lhs == rhs)
 }
 
 fn message(current_round: u64, prev_sig: &[u8]) -> Vec<u8> {

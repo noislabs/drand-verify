@@ -16,9 +16,15 @@ fn main() {
     let round = args[0].parse::<u64>().unwrap();
     let previous_signature = hex::decode(&args[1]).unwrap();
     let signature = hex::decode(&args[2]).unwrap();
-    if verify(&pk, round, &previous_signature, &signature) {
-        println!("Hello, world!");
-    } else {
-        println!("Verification failed");
+
+    match verify(&pk, round, &previous_signature, &signature) {
+        Err(err) => eprintln!("Error during verification: {}", err),
+        Ok(valid) => {
+            if valid {
+                println!("Hello, world!");
+            } else {
+                println!("Verification failed");
+            }
+        }
     }
 }

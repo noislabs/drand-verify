@@ -1,12 +1,24 @@
 use wasm_bindgen::prelude::*;
 
-use super::points::g1_from_variable;
-use super::verify::verify;
+use super::points::{g1_from_variable, InvalidPoint};
+use super::verify::{verify, VerificationError};
 
 struct VerifyWebError(pub String);
 
 impl From<hex::FromHexError> for VerifyWebError {
     fn from(source: hex::FromHexError) -> Self {
+        Self(source.to_string())
+    }
+}
+
+impl From<InvalidPoint> for VerifyWebError {
+    fn from(source: InvalidPoint) -> Self {
+        Self(source.to_string())
+    }
+}
+
+impl From<VerificationError> for VerifyWebError {
+    fn from(source: VerificationError) -> Self {
         Self(source.to_string())
     }
 }
@@ -48,9 +60,9 @@ fn drand_verify_impl(
     previous_signature_hex: &str,
     signature_hex: &str,
 ) -> Result<bool, VerifyWebError> {
-    let pk = g1_from_variable(&hex::decode(pk_hex)?);
+    let pk = g1_from_variable(&hex::decode(pk_hex)?)?;
     let previous_signature = hex::decode(previous_signature_hex)?;
     let signature = hex::decode(signature_hex)?;
-    let result = verify(&pk, round.into(), &previous_signature, &signature);
+    let result = verify(&pk, round.into(), &previous_signature, &signature)?;
     Ok(result)
 }
