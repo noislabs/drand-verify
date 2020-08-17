@@ -273,7 +273,7 @@ checksum = "2839e79665f131bdb5782e51f2c6c9599c133c6098982a54c794358bf432529c"
 [[package]]
 name = "paired"
 version = "0.20.1"
-source = "git+https://github.com/webmaster128/pairing?branch=add-missing-symbols#94af681aa1a2dde8c671c8153eb7d04bb396f3cc"
+source = "git+https://github.com/webmaster128/pairing?branch=add-missing-symbols#d1fcef21fa68e31dc4df505462f8ff53379d1bd8"
 dependencies = [
  "blake2b_simd",
  "byteorder",
