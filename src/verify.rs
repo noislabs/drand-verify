@@ -7,6 +7,7 @@ const DOMAIN: &[u8] = b"BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_NUL_";
 
 use super::points::g2_from_variable;
 
+#[derive(Debug)]
 pub enum VerificationError {
     InvalidPoint { field: String, msg: String },
 }
@@ -79,7 +80,7 @@ mod tests {
         // curl -sS https://drand.cloudflare.com/public/72785
         let previous_signature = hex::decode("a609e19a03c2fcc559e8dae14900aaefe517cb55c840f6e69bc8e4f66c8d18e8a609685d9917efbfb0c37f058c2de88f13d297c7e19e0ab24813079efe57a182554ff054c7638153f9b26a60e7111f71a0ff63d9571704905d3ca6df0b031747").unwrap();
         let signature = hex::decode("82f5d3d2de4db19d40a6980e8aa37842a0e55d1df06bd68bddc8d60002e8e959eb9cfa368b3c1b77d18f02a54fe047b80f0989315f83b12a74fd8679c4f12aae86eaf6ab5690b34f1fddd50ee3cc6f6cdf59e95526d5a5d82aaa84fa6f181e42").unwrap();
-        let result = verify(&pk, 72785, &previous_signature, &signature);
+        let result = verify(&pk, 72785, &previous_signature, &signature).unwrap();
         assert_eq!(result, true);
     }
 }

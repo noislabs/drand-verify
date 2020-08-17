@@ -3,6 +3,7 @@ use std::fmt;
 use paired::bls12_381::{G1Affine, G1Compressed, G2Affine, G2Compressed};
 use paired::EncodedPoint;
 
+#[derive(Debug)]
 pub enum InvalidPoint {
     InvalidLength { expected: usize, actual: usize },
 }
