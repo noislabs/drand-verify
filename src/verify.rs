@@ -78,10 +78,29 @@ mod tests {
     #[test]
     fn verify_works() {
         let pk = g1_from_fixed(PK_LEO_MAINNET);
+
         // curl -sS https://drand.cloudflare.com/public/72785
         let previous_signature = hex::decode("a609e19a03c2fcc559e8dae14900aaefe517cb55c840f6e69bc8e4f66c8d18e8a609685d9917efbfb0c37f058c2de88f13d297c7e19e0ab24813079efe57a182554ff054c7638153f9b26a60e7111f71a0ff63d9571704905d3ca6df0b031747").unwrap();
         let signature = hex::decode("82f5d3d2de4db19d40a6980e8aa37842a0e55d1df06bd68bddc8d60002e8e959eb9cfa368b3c1b77d18f02a54fe047b80f0989315f83b12a74fd8679c4f12aae86eaf6ab5690b34f1fddd50ee3cc6f6cdf59e95526d5a5d82aaa84fa6f181e42").unwrap();
-        let result = verify(&pk, 72785, &previous_signature, &signature).unwrap();
+        let round: u64 = 72785;
+
+        // good
+        let result = verify(&pk, round, &previous_signature, &signature).unwrap();
         assert_eq!(result, true);
+
+        // wrong round
+        let result = verify(&pk, 321, &previous_signature, &signature).unwrap();
+        assert_eq!(result, false);
+
+        // wrong previous signature
+        let previous_signature_corrupted = hex::decode("6a09e19a03c2fcc559e8dae14900aaefe517cb55c840f6e69bc8e4f66c8d18e8a609685d9917efbfb0c37f058c2de88f13d297c7e19e0ab24813079efe57a182554ff054c7638153f9b26a60e7111f71a0ff63d9571704905d3ca6df0b031747").unwrap();
+        let result = verify(&pk, round, &previous_signature_corrupted, &signature).unwrap();
+        assert_eq!(result, false);
+
+        // wrong signature
+        // (use signature from https://drand.cloudflare.com/public/1 to get a valid curve point)
+        let wrong_signature = hex::decode("8d61d9100567de44682506aea1a7a6fa6e5491cd27a0a0ed349ef6910ac5ac20ff7bc3e09d7c046566c9f7f3c6f3b10104990e7cb424998203d8f7de586fb7fa5f60045417a432684f85093b06ca91c769f0e7ca19268375e659c2a2352b4655").unwrap();
+        let result = verify(&pk, round, &previous_signature, &wrong_signature).unwrap();
+        assert_eq!(result, false);
     }
 }
