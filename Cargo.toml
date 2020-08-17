@@ -5,11 +5,17 @@ authors = ["Simon Warta <simon@warta.it>"]
 edition = "2018"
 license = "Apache-2.0"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+js = ["hex", "wasm-bindgen"]
 
 [dependencies]
 paired = { path = "../pairing" }
 sha2 = "0.8"
+hex = { version = "0.4", optional = true }
+wasm-bindgen = { version = "0.2.67", optional = true }
 
 [dev-dependencies]
 hex = "0.4"
