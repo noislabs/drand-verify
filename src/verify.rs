@@ -77,7 +77,7 @@ mod tests {
 
     #[test]
     fn verify_works() {
-        let pk = g1_from_fixed(PK_LEO_MAINNET);
+        let pk = g1_from_fixed(PK_LEO_MAINNET).unwrap();
 
         // curl -sS https://drand.cloudflare.com/public/72785
         let previous_signature = hex::decode("a609e19a03c2fcc559e8dae14900aaefe517cb55c840f6e69bc8e4f66c8d18e8a609685d9917efbfb0c37f058c2de88f13d297c7e19e0ab24813079efe57a182554ff054c7638153f9b26a60e7111f71a0ff63d9571704905d3ca6df0b031747").unwrap();

@@ -8,7 +8,7 @@ use drand_verify::{g1_from_fixed, verify};
 const PK_LEO_MAINNET: [u8; 48] = hex!("868f005eb8e6e4ca0a47c8a77ceaa5309a47978a7c71bc5cce96366b5d7a569937c529eeda66c7293784a9402801af31");
 
 fn main_impl() -> i32 {
-    let pk = g1_from_fixed(PK_LEO_MAINNET);
+    let pk = g1_from_fixed(PK_LEO_MAINNET).unwrap();
 
     let args: Vec<String> = env::args().collect();
     if args.len() != 4 {
