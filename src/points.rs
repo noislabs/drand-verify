@@ -27,9 +27,7 @@ pub fn g1_from_variable(data: &[u8]) -> Result<G1Affine, InvalidPoint> {
     }
 
     let mut buf = [0u8; 48];
-    for i in 0..48 {
-        buf[i] = data[i];
-    }
+    buf[..].clone_from_slice(&data[..]);
     Ok(g1_from_fixed(buf))
 }
 
@@ -46,9 +44,7 @@ pub fn g2_from_variable(data: &[u8]) -> Result<G2Affine, InvalidPoint> {
     }
 
     let mut buf = [0u8; 96];
-    for i in 0..96 {
-        buf[i] = data[i];
-    }
+    buf[..].clone_from_slice(&data[..]);
     Ok(g2_from_fixed(buf))
 }
 
