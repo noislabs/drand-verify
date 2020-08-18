@@ -16,7 +16,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: 1.46.0
+          toolchain: 1.45.2
           target: wasm32-unknown-unknown
           override: true
 
@@ -39,7 +39,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: 1.46.0
+          toolchain: 1.45.2
           target: wasm32-unknown-unknown
           override: true
 
@@ -71,7 +71,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: 1.46.0
+          toolchain: 1.45.2
           override: true
           components: rustfmt, clippy
 
