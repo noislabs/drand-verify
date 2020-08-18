@@ -14,8 +14,8 @@ crate-type = ["cdylib", "rlib"]
 js = ["hex", "wasm-bindgen"]
 
 [dependencies]
-# paired = { path = "../pairing" }
-paired = { git = "https://github.com/webmaster128/pairing", branch = "add-missing-symbols" }
+# paired = { path = "../paired" }
+paired = { git = "https://github.com/webmaster128/paired", branch = "add-missing-symbols" }
 sha2 = "0.8"
 hex = { version = "0.4", optional = true }
 wasm-bindgen = { version = "0.2.67", optional = true }
