@@ -1,11 +1,20 @@
 use std::fmt;
 
 use paired::bls12_381::{G1Affine, G1Compressed, G2Affine, G2Compressed};
-use paired::EncodedPoint;
+use paired::{EncodedPoint, GroupDecodingError};
 
 #[derive(Debug)]
 pub enum InvalidPoint {
     InvalidLength { expected: usize, actual: usize },
+    DecodingError { msg: String },
+}
+
+impl From<GroupDecodingError> for InvalidPoint {
+    fn from(source: GroupDecodingError) -> Self {
+        InvalidPoint::DecodingError {
+            msg: format!("{}", source),
+        }
+    }
 }
 
 impl fmt::Display for InvalidPoint {
@@ -13,6 +22,9 @@ impl fmt::Display for InvalidPoint {
         match self {
             InvalidPoint::InvalidLength { expected, actual } => {
                 write!(f, "Invalid input length for point (must be in compressed format): Expected {}, actual: {}", expected, actual)
+            }
+            InvalidPoint::DecodingError { msg } => {
+                write!(f, "Invalid point: {}", msg)
             }
         }
     }
@@ -28,11 +40,7 @@ pub fn g1_from_variable(data: &[u8]) -> Result<G1Affine, InvalidPoint> {
 
     let mut buf = [0u8; 48];
     buf[..].clone_from_slice(&data[..]);
-    Ok(g1_from_fixed(buf))
-}
-
-pub fn g1_from_fixed(data: [u8; 48]) -> G1Affine {
-    G1Compressed(data).into_affine().unwrap()
+    g1_from_fixed(buf)
 }
 
 pub fn g2_from_variable(data: &[u8]) -> Result<G2Affine, InvalidPoint> {
@@ -45,11 +53,15 @@ pub fn g2_from_variable(data: &[u8]) -> Result<G2Affine, InvalidPoint> {
 
     let mut buf = [0u8; 96];
     buf[..].clone_from_slice(&data[..]);
-    Ok(g2_from_fixed(buf))
+    g2_from_fixed(buf)
 }
 
-pub fn g2_from_fixed(data: [u8; 96]) -> G2Affine {
-    G2Compressed(data).into_affine().unwrap()
+pub fn g1_from_fixed(data: [u8; 48]) -> Result<G1Affine, InvalidPoint> {
+    Ok(G1Compressed(data).into_affine()?)
+}
+
+pub fn g2_from_fixed(data: [u8; 96]) -> Result<G2Affine, InvalidPoint> {
+    Ok(G2Compressed(data).into_affine()?)
 }
 
 #[cfg(test)]
@@ -67,6 +79,7 @@ mod tests {
                 assert_eq!(expected, 48);
                 assert_eq!(actual, 47);
             }
+            err => panic!("Unexpected error: {:?}", err),
         }
     }
 
@@ -81,6 +94,51 @@ mod tests {
                 assert_eq!(expected, 96);
                 assert_eq!(actual, 95);
             }
+            err => panic!("Unexpected error: {:?}", err),
+        }
+    }
+
+    #[test]
+    fn g1_from_fixed_works() {
+        let result = g1_from_fixed(hex_literal::hex!("868f005eb8e6e4ca0a47c8a77ceaa5309a47978a7c71bc5cce96366b5d7a569937c529eeda66c7293784a9402801af31"));
+        assert!(result.is_ok());
+
+        let result = g1_from_fixed(hex_literal::hex!("118f005eb8e6e4ca0a47c8a77ceaa5309a47978a7c71bc5cce96366b5d7a569937c529eeda66c7293784a9402801af31"));
+        match result.unwrap_err() {
+            InvalidPoint::DecodingError { msg } => {
+                assert_eq!(msg, "encoding has unexpected compression mode");
+            }
+            err => panic!("Unexpected error: {:?}", err),
+        }
+
+        let result = g1_from_fixed(hex_literal::hex!("868f005eb8e6e4ca0a47c8a77ceaa5309a47978a7c71bc5cce96366b5d7a569937c529eeda66c7293784a9402801af22"));
+        match result.unwrap_err() {
+            InvalidPoint::DecodingError { msg } => {
+                assert_eq!(msg, "coordinate(s) do not lie on the curve");
+            }
+            err => panic!("Unexpected error: {:?}", err),
+        }
+    }
+
+    #[test]
+    fn g2_from_fixed_works() {
+        let result = g2_from_fixed(hex_literal::hex!("82f5d3d2de4db19d40a6980e8aa37842a0e55d1df06bd68bddc8d60002e8e959eb9cfa368b3c1b77d18f02a54fe047b80f0989315f83b12a74fd8679c4f12aae86eaf6ab5690b34f1fddd50ee3cc6f6cdf59e95526d5a5d82aaa84fa6f181e42"));
+        assert!(result.is_ok());
+
+        let result = g2_from_fixed(hex_literal::hex!("11f5d3d2de4db19d40a6980e8aa37842a0e55d1df06bd68bddc8d60002e8e959eb9cfa368b3c1b77d18f02a54fe047b80f0989315f83b12a74fd8679c4f12aae86eaf6ab5690b34f1fddd50ee3cc6f6cdf59e95526d5a5d82aaa84fa6f181e42"));
+        match result.unwrap_err() {
+            InvalidPoint::DecodingError { msg } => {
+                assert_eq!(msg, "encoding has unexpected compression mode");
+            }
+            err => panic!("Unexpected error: {:?}", err),
+        }
+
+        let result = g2_from_fixed(hex_literal::hex!("82f5d3d2de4db19d40a6980e8aa37842a0e55d1df06bd68bddc8d60002e8e959eb9cfa368b3c1b77d18f02a54fe047b80f0989315f83b12a74fd8679c4f12aae86eaf6ab5690b34f1fddd50ee3cc6f6cdf59e95526d5a5d82aaa84fa6f181e44"));
+        match result.unwrap_err() {
+            InvalidPoint::DecodingError { msg } => {
+                assert_eq!(msg, "coordinate(s) do not lie on the curve");
+            }
+            err => panic!("Unexpected error: {:?}", err),
         }
     }
 }
