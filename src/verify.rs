@@ -63,8 +63,7 @@ fn fast_pairing_equality(p: &G1Affine, q: &G2Affine, r: &G1Affine, s: &G2Affine)
     };
     let mut tmp = e_prime(&minus_p, &q);
     tmp.mul_assign(&e_prime(r, &s));
-    let is_one = Bls12::final_exponentiation(&tmp).unwrap() == Fq12::one();
-    is_one
+    Bls12::final_exponentiation(&tmp).unwrap() == Fq12::one()
 }
 
 fn message(current_round: u64, prev_sig: &[u8]) -> Vec<u8> {
