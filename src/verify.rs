@@ -1,5 +1,7 @@
-use paired::bls12_381::{G1Affine, G2Affine, G2};
-use paired::{CurveAffine, CurveProjective, ExpandMsgXmd, HashToCurve, PairingCurveAffine};
+use paired::bls12_381::{Bls12, Fq12, G1Affine, G2Affine, G2};
+use paired::{
+    CurveAffine, CurveProjective, Engine, ExpandMsgXmd, Field, HashToCurve, PairingCurveAffine,
+};
 use sha2::{Digest, Sha256};
 use std::fmt;
 
@@ -43,9 +45,26 @@ pub fn verify(
     let msg = message(round, previous_signature);
     let msg_on_g2 = msg_to_curve(&msg);
 
-    let lhs = g1.pairing_with(&sigma);
-    let rhs = pk.pairing_with(&msg_on_g2);
-    Ok(lhs == rhs)
+    Ok(fast_pairing_equality(&g1, &sigma, pk, &msg_on_g2))
+}
+
+/// Checks if e(p, q) == e(r, s)
+///
+/// See https://hackmd.io/@benjaminion/bls12-381#Final-exponentiation
+fn fast_pairing_equality(p: &G1Affine, q: &G2Affine, r: &G1Affine, s: &G2Affine) -> bool {
+    fn e_prime(p: &G1Affine, q: &G2Affine) -> Fq12 {
+        Bls12::miller_loop([(&(p.prepare()), &(q.prepare()))].iter())
+    }
+
+    let minus_p = {
+        let mut out = *p;
+        out.negate();
+        out
+    };
+    let mut tmp = e_prime(&minus_p, &q);
+    tmp.mul_assign(&e_prime(r, &s));
+    let is_one = Bls12::final_exponentiation(&tmp).unwrap() == Fq12::one();
+    is_one
 }
 
 fn message(current_round: u64, prev_sig: &[u8]) -> Vec<u8> {
