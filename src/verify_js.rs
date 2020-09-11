@@ -37,13 +37,13 @@ impl From<VerifyWebError> for JsValue {
 /// The result type is translated to an exception in case of an error
 /// and too a boolean value in case of success.
 #[wasm_bindgen]
-pub fn drand_verify(
+pub fn verify_beacon(
     pk_hex: &str,
     round: u32,
     previous_signature_hex: &str,
     signature_hex: &str,
 ) -> Result<bool, JsValue> {
-    Ok(drand_verify_impl(
+    Ok(verify_beacon_impl(
         pk_hex,
         round,
         previous_signature_hex,
@@ -51,10 +51,10 @@ pub fn drand_verify(
     )?)
 }
 
-/// Like drand_verify but with the structured error type needed to translate between lower level errors and JsValue.
+/// Like verify_beacon but with the structured error type needed to translate between lower level errors and JsValue.
 /// If you cn show me how to translate from hex::FromHexError to JsValue without this intermediate function,
 /// I'd be happy to learn how.
-fn drand_verify_impl(
+fn verify_beacon_impl(
     pk_hex: &str,
     round: u32,
     previous_signature_hex: &str,
