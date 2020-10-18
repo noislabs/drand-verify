@@ -12,6 +12,17 @@ $ cargo test
 $ cargo build --examples
 ```
 
+## Run example
+
+Verifies a random beacon (round, previous_signature, signature) against the League of Entropy
+public key and calculates the corresponding randomness value.
+
+```
+$ cargo run --example drand_verify 1337 80d95247ddf1bb3acf5738497a5f10406be283144603f63d714bb1a44ff6b93285ae2697fffeb50c68862bd9fbecd4b204b1798d2686b4ac5d573615031d9d67e6168bde9a7adf1161430a498ca701a25c216aee3e38ffd5290369034fa050a2 945b08dcb30e24da281ccf14a646f0630ceec515af5c5895e18cc1b19edd65d156b71c776a369af3487f1bc6af1062500b059e01095cc0eedce91713977d7735cac675554edfa0d0481bb991ed93d333d08286192c05bf6b65d20f23a37fc7bb
+Verification succeeded
+Randomness: 2660664f8d4bc401194d80d81da20a1e79480f65b8e2d205aecbd143b5bfb0d3
+```
+
 ## Build for JS
 
 In order to keep the JS/Wasm interface simple, there is a wrapper in the module `verify_js.rs` which takes
