@@ -6,4 +6,4 @@ mod verify_js;
 
 pub use points::{g1_from_fixed, g1_from_variable, g2_from_fixed, g2_from_variable};
 pub use randomness::derive_randomness;
-pub use verify::verify;
+pub use verify::{verify, VerificationError};
