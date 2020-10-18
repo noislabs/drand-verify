@@ -71,9 +71,9 @@ fn fast_pairing_equality(p: &G1Affine, q: &G2Affine, r: &G1Affine, s: &G2Affine)
 
 fn message(current_round: u64, prev_sig: &[u8]) -> Vec<u8> {
     let mut hasher = Sha256::default();
-    hasher.input(prev_sig);
-    hasher.input(round_to_bytes(current_round));
-    hasher.result().to_vec()
+    hasher.update(prev_sig);
+    hasher.update(round_to_bytes(current_round));
+    hasher.finalize().to_vec()
 }
 
 /// https://github.com/drand/drand-client/blob/master/wasm/chain/verify.go#L28-L33

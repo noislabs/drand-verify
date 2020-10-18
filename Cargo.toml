@@ -16,7 +16,7 @@ js = ["hex", "wasm-bindgen"]
 [dependencies]
 # paired = { path = "../paired" }
 paired = { git = "https://github.com/webmaster128/paired", branch = "add-missing-symbols" }
-sha2 = "0.8"
+sha2 = "0.9"
 hex = { version = "0.4", optional = true }
 wasm-bindgen = { version = "0.2.67", optional = true }
 
