@@ -3,6 +3,7 @@ use paired::{
     CurveAffine, CurveProjective, Engine, ExpandMsgXmd, Field, HashToCurve, PairingCurveAffine,
 };
 use sha2::{Digest, Sha256};
+use std::error::Error;
 use std::fmt;
 
 const DOMAIN: &[u8] = b"BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_NUL_";
@@ -23,6 +24,8 @@ impl fmt::Display for VerificationError {
         }
     }
 }
+
+impl Error for VerificationError {}
 
 // Verify checks beacon components to see if they are valid.
 pub fn verify(
