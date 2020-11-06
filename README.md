@@ -1,5 +1,8 @@
 # drand verify
 
+[![drand-verify on crates.io](https://img.shields.io/crates/v/drand-verify.svg)](https://crates.io/crates/drand-verify)
+[![Docs](https://docs.rs/drand-verify/badge.svg)](https://docs.rs/drand-verify)
+
 A [drand](https://drand.love/) verification library in Rust.
 This can be used by other crates or be compiled to a Wasm blob (< 500 kilobytes) with JavaScript bindings.
 
