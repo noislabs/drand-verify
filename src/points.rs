@@ -1,7 +1,7 @@
 use std::fmt;
 
+use groupy::{EncodedPoint, GroupDecodingError};
 use paired::bls12_381::{G1Affine, G1Compressed, G2Affine, G2Compressed};
-use paired::{EncodedPoint, GroupDecodingError};
 
 #[derive(Debug)]
 pub enum InvalidPoint {
@@ -57,11 +57,17 @@ pub fn g2_from_variable(data: &[u8]) -> Result<G2Affine, InvalidPoint> {
 }
 
 pub fn g1_from_fixed(data: [u8; 48]) -> Result<G1Affine, InvalidPoint> {
-    Ok(G1Compressed(data).into_affine()?)
+    // Workaround for https://github.com/filecoin-project/paired/pull/23
+    let mut compressed = G1Compressed::empty();
+    compressed.as_mut().copy_from_slice(&data);
+    Ok(compressed.into_affine()?)
 }
 
 pub fn g2_from_fixed(data: [u8; 96]) -> Result<G2Affine, InvalidPoint> {
-    Ok(G2Compressed(data).into_affine()?)
+    // Workaround for https://github.com/filecoin-project/paired/pull/23
+    let mut compressed = G2Compressed::empty();
+    compressed.as_mut().copy_from_slice(&data);
+    Ok(compressed.into_affine()?)
 }
 
 #[cfg(test)]
