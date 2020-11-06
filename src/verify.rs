@@ -1,7 +1,7 @@
+use fff::Field;
+use groupy::{CurveAffine, CurveProjective};
 use paired::bls12_381::{Bls12, Fq12, G1Affine, G2Affine, G2};
-use paired::{
-    CurveAffine, CurveProjective, Engine, ExpandMsgXmd, Field, HashToCurve, PairingCurveAffine,
-};
+use paired::{Engine, ExpandMsgXmd, HashToCurve, PairingCurveAffine};
 use sha2::{Digest, Sha256};
 use std::error::Error;
 use std::fmt;
