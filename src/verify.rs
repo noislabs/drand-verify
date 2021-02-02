@@ -40,6 +40,9 @@ pub fn verify(
 
 /// First step of the verification.
 /// Should not be used directly in most cases. Use [`verify`] instead.
+///
+/// This API is not stable.
+#[doc(hidden)]
 pub fn verify_step1(round: u64, previous_signature: &[u8]) -> G2Affine {
     let msg = message(round, previous_signature);
     let msg_on_g2 = msg_to_curve(&msg);
@@ -48,6 +51,9 @@ pub fn verify_step1(round: u64, previous_signature: &[u8]) -> G2Affine {
 
 /// Second step of the verification.
 /// Should not be used directly in most cases. Use [`verify`] instead.
+///
+/// This API is not stable.
+#[doc(hidden)]
 pub fn verify_step2(
     pk: &G1Affine,
     signature: &[u8],
