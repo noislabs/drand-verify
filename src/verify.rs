@@ -45,8 +45,7 @@ pub fn verify(
 #[doc(hidden)]
 pub fn verify_step1(round: u64, previous_signature: &[u8]) -> G2Affine {
     let msg = message(round, previous_signature);
-    let msg_on_g2 = msg_to_curve(&msg);
-    msg_on_g2
+    msg_to_curve(&msg)
 }
 
 /// Second step of the verification.
