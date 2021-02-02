@@ -34,6 +34,25 @@ pub fn verify(
     previous_signature: &[u8],
     signature: &[u8],
 ) -> Result<bool, VerificationError> {
+    let msg_on_g2 = verify_step1(round, previous_signature);
+    verify_step2(pk, signature, &msg_on_g2)
+}
+
+/// First step of the verification.
+/// Should not be used directly in most cases. Use [`verify`] instead.
+pub fn verify_step1(round: u64, previous_signature: &[u8]) -> G2Affine {
+    let msg = message(round, previous_signature);
+    let msg_on_g2 = msg_to_curve(&msg);
+    msg_on_g2
+}
+
+/// Second step of the verification.
+/// Should not be used directly in most cases. Use [`verify`] instead.
+pub fn verify_step2(
+    pk: &G1Affine,
+    signature: &[u8],
+    msg_on_g2: &G2Affine,
+) -> Result<bool, VerificationError> {
     let g1 = G1Affine::one();
     let sigma = match g2_from_variable(signature) {
         Ok(sigma) => sigma,
@@ -44,11 +63,7 @@ pub fn verify(
             })
         }
     };
-
-    let msg = message(round, previous_signature);
-    let msg_on_g2 = msg_to_curve(&msg);
-
-    Ok(fast_pairing_equality(&g1, &sigma, pk, &msg_on_g2))
+    Ok(fast_pairing_equality(&g1, &sigma, pk, msg_on_g2))
 }
 
 /// Checks if e(p, q) == e(r, s)
