@@ -3,7 +3,7 @@ name = "drand-verify"
 description = "A drand verification library."
 version = "0.1.0"
 authors = ["Simon Warta <simon@warta.it>"]
-edition = "2018"
+edition = "2021"
 license = "Apache-2.0"
 repository = "https://github.com/CosmWasm/drand-verify"
 
@@ -15,12 +15,12 @@ js = ["hex", "wasm-bindgen"]
 
 [dependencies]
 # Needed due to missing re-exports in paired
-fff = "0.2.0"
+fff = "0.3"
 # Needed due to missing re-exports in paired
-groupy = "0.3.0"
+groupy = "0.4"
 # paired = { path = "../paired" }
 # paired = { git = "https://github.com/webmaster128/paired", branch = "add-missing-symbols" }
-paired = "0.21"
+paired = "0.22"
 sha2 = "0.9"
 hex = { version = "0.4", optional = true }
 wasm-bindgen = { version = "0.2.67", optional = true }
