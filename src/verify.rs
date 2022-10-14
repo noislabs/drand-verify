@@ -73,20 +73,24 @@ pub fn verify_step2(
 
 /// Checks if e(p, q) == e(r, s)
 ///
-/// See https://hackmd.io/@benjaminion/bls12-381#Final-exponentiation
+/// See https://hackmd.io/@benjaminion/bls12-381#Final-exponentiation.
+///
+/// Optimized by this trick:
+///   Instead of doing e(a,b) (in G2) multiplied by e(-c,d) (in G2)
+///   (which is costly is to multiply in G2 because these are very big numbers)
+///   we can do FinalExponentiation(MillerLoop( [a,b], [-c,d] )) which is the same
+///   in an optimized way.
 fn fast_pairing_equality(p: &G1Affine, q: &G2Affine, r: &G1Affine, s: &G2Affine) -> bool {
-    fn e_prime(p: &G1Affine, q: &G2Affine) -> Fq12 {
-        Bls12::miller_loop([(&(p.prepare()), &(q.prepare()))].iter())
-    }
-
     let minus_p = {
         let mut out = *p;
         out.negate();
         out
     };
-    let mut tmp = e_prime(&minus_p, q);
-    tmp.mul_assign(&e_prime(r, s));
-    match Bls12::final_exponentiation(&tmp) {
+    // "some number of (G1, G2) pairs" are the inputs of the miller loop
+    let pair1 = (&minus_p.prepare(), &q.prepare());
+    let pair2 = (&r.prepare(), &s.prepare());
+    let looped = Bls12::miller_loop([&pair1, &pair2]);
+    match Bls12::final_exponentiation(&looped) {
         Some(value) => value == Fq12::one(),
         None => false,
     }
