@@ -1,4 +1,13 @@
-Copyright 2020 Simon Warta
+Preamble
+
+    This library was developed partially as a side-project, partially
+    as part of Simon's role as CosmWasm maintainer at Confio. It served
+    as the basis for a proof of concept for drand beacon verification in
+    CosmWasm, Terrand and Nois. In November 2022, ownership was transferred
+    to Nois as it does not fit in Confio's or CosmWasm's core stack.
+
+Copyright 2020-2022 Simon Warta
+Copyright 2021-2022 Confio GmbH
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
