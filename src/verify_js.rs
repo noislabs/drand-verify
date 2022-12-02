@@ -37,6 +37,7 @@ impl From<VerifyWebError> for JsValue {
 /// The result type is translated to an exception in case of an error
 /// and too a boolean value in case of success.
 #[wasm_bindgen]
+#[allow(dead_code)] // exported via wasm_bindgen
 pub fn verify_beacon(
     pk_hex: &str,
     round: u32,
