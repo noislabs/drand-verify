@@ -20,6 +20,18 @@ jobs:
           target: wasm32-unknown-unknown
           override: true
 
+      - name: Build default feature
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --locked
+
+      - name: Build js feature
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --locked --features js
+
       - name: Run unit tests
         uses: actions-rs/cargo@v1
         with:
@@ -80,4 +92,5 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: clippy
-          args: -- -D warnings
+          # Cannot use --all-targets because benches require Rust nightly
+          args: --tests --examples -- -D warnings
