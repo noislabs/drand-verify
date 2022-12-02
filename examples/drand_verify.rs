@@ -30,7 +30,7 @@ fn main_impl() -> i32 {
             if valid {
                 println!("Verification succeeded");
                 let randomness = derive_randomness(&signature);
-                println!("Randomness: {}", hex::encode(&randomness));
+                println!("Randomness: {}", hex::encode(randomness));
                 0
             } else {
                 println!("Verification failed");
