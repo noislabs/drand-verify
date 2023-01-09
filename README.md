@@ -10,7 +10,7 @@ This can be used by other crates or be compiled to a Wasm blob (< 500 kilobytes)
 
 - Supports classic 30s mainnet/testnet ✅
 - Based on well-maintained [pairing] BLS12-381 implementation ✅
-- Supports unchained mode ✅
+- Supports [unchained mode] ✅
 
 Next up:
 
@@ -23,6 +23,7 @@ The following things are intentionally unsupported:
 - JSON parsing: we do no decoding here. Our callers know much better how to do JSON (or protobuf) decoding in their environment.
 
 [pairing]: https://crates.io/crates/pairing
+[unchained mode]: https://drand.love/blog/2022/02/21/multi-frequency-support-and-timelock-encryption-capabilities/
 
 ## Development
 
