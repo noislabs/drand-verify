@@ -6,6 +6,24 @@
 A [drand](https://drand.love/) verification library in Rust.
 This can be used by other crates or be compiled to a Wasm blob (< 500 kilobytes) with JavaScript bindings.
 
+## Feature overview
+
+- Supports classic 30s mainnet/testnet ✅
+- Based on well-maintained [pairing] BLS12-381 implementation ✅
+- Supports unchained mode ✅
+
+Next up:
+
+- G1/G2 swap 🏗
+- Refactor away all mentions of BLS and only operate at pubkey/signature level
+
+The following things are intentionally unsupported:
+
+- Network requests: we do no networking here. Our callers know much better how to do networking in their environment.
+- JSON parsing: we do no decoding here. Our callers know much better how to do JSON (or protobuf) decoding in their environment.
+
+[pairing]: https://crates.io/crates/pairing
+
 ## Development
 
 Compile with
