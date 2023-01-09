@@ -28,7 +28,9 @@ impl fmt::Display for VerificationError {
 
 impl Error for VerificationError {}
 
-// Verify checks beacon components to see if they are valid.
+/// Checks beacon components to see if they are valid.
+///
+/// For unchained mode set `previous_signature` to an empty value.
 pub fn verify(
     pk: &G1Affine,
     round: u64,
@@ -119,6 +121,9 @@ mod tests {
     /// Public key League of Entropy Mainnet (curl -sS https://drand.cloudflare.com/info)
     const PK_LEO_MAINNET: [u8; 48] = hex!("868f005eb8e6e4ca0a47c8a77ceaa5309a47978a7c71bc5cce96366b5d7a569937c529eeda66c7293784a9402801af31");
 
+    /// Public key League of Entropy Mainnet (curl -sS https://pl-us.testnet.drand.sh/7672797f548f3f4748ac4bf3352fc6c6b6468c9ad40ad456a397545c6e2df5bf/info)
+    const PK_UNCHAINED_TESTNET: [u8; 48] = hex!("8200fc249deb0148eb918d6e213980c5d01acd7fc251900d9260136da3b54836ce125172399ddc69c4e3e11429b62c11");
+
     #[test]
     fn verify_works() {
         let pk = g1_from_fixed(PK_LEO_MAINNET).unwrap();
@@ -145,6 +150,29 @@ mod tests {
         // (use signature from https://drand.cloudflare.com/public/1 to get a valid curve point)
         let wrong_signature = hex::decode("8d61d9100567de44682506aea1a7a6fa6e5491cd27a0a0ed349ef6910ac5ac20ff7bc3e09d7c046566c9f7f3c6f3b10104990e7cb424998203d8f7de586fb7fa5f60045417a432684f85093b06ca91c769f0e7ca19268375e659c2a2352b4655").unwrap();
         let result = verify(&pk, round, &previous_signature, &wrong_signature).unwrap();
+        assert!(!result);
+    }
+
+    #[test]
+    fn verify_works_for_unchained() {
+        let pk = g1_from_fixed(PK_UNCHAINED_TESTNET).unwrap();
+
+        // curl -sS https://pl-us.testnet.drand.sh/7672797f548f3f4748ac4bf3352fc6c6b6468c9ad40ad456a397545c6e2df5bf/public/223344
+        let signature = hex::decode("94f6b85df7cce7237e8e7df66d794ddad092de5d8bb6a791b97e905aa89852e506ac36a792eba7021e22eebf34891f8914bf9a8dd9233ea0a4c5ca00ef8404999f899073dd2eade61fe54077fee8168f83dcb61a758b6883b38904054e64a433").unwrap();
+        let round: u64 = 223344;
+
+        // good
+        let result = verify(&pk, round, b"", &signature).unwrap();
+        assert!(result);
+
+        // wrong round
+        let result = verify(&pk, round - 1, b"", &signature).unwrap();
+        assert!(!result);
+
+        // wrong signature
+        // (use signature from https://pl-us.testnet.drand.sh/7672797f548f3f4748ac4bf3352fc6c6b6468c9ad40ad456a397545c6e2df5bf/public/1 to get a valid curve point)
+        let wrong_signature = hex::decode("86ecea71376e78abd19aaf0ad52f462a6483626563b1023bd04815a7b953da888c74f5bf6ee672a5688603ab310026230522898f33f23a7de363c66f90ffd49ec77ebf7f6c1478a9ecd6e714b4d532ab43d044da0a16fed13b4791d7fc999e2b").unwrap();
+        let result = verify(&pk, round, b"", &wrong_signature).unwrap();
         assert!(!result);
     }
 }
