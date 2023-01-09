@@ -1,7 +1,8 @@
-use fff::Field;
-use groupy::{CurveAffine, CurveProjective};
-use paired::bls12_381::{Bls12, Fq12, G1Affine, G2Affine, G2};
-use paired::{Engine, ExpandMsgXmd, HashToCurve, PairingCurveAffine};
+use bls12_381::{
+    hash_to_curve::{ExpandMsgXmd, HashToCurve},
+    Bls12, G1Affine, G2Affine, G2Prepared, G2Projective,
+};
+use pairing::{group::Group, MultiMillerLoop};
 use sha2::{Digest, Sha256};
 use std::error::Error;
 use std::fmt;
@@ -58,7 +59,7 @@ pub fn verify_step2(
     signature: &[u8],
     msg_on_g2: &G2Affine,
 ) -> Result<bool, VerificationError> {
-    let g1 = G1Affine::one();
+    let g1 = G1Affine::generator();
     let sigma = match g2_from_variable(signature) {
         Ok(sigma) => sigma,
         Err(err) => {
@@ -81,19 +82,14 @@ pub fn verify_step2(
 ///   we can do FinalExponentiation(MillerLoop( [a,b], [-c,d] )) which is the same
 ///   in an optimized way.
 fn fast_pairing_equality(p: &G1Affine, q: &G2Affine, r: &G1Affine, s: &G2Affine) -> bool {
-    let minus_p = {
-        let mut out = *p;
-        out.negate();
-        out
-    };
+    let minus_p = -p;
     // "some number of (G1, G2) pairs" are the inputs of the miller loop
-    let pair1 = (&minus_p.prepare(), &q.prepare());
-    let pair2 = (&r.prepare(), &s.prepare());
-    let looped = Bls12::miller_loop([&pair1, &pair2]);
-    match Bls12::final_exponentiation(&looped) {
-        Some(value) => value == Fq12::one(),
-        None => false,
-    }
+    let pair1 = (&minus_p, &G2Prepared::from(*q));
+    let pair2 = (r, &G2Prepared::from(*s));
+    let looped = Bls12::multi_miller_loop(&[pair1, pair2]);
+    // let looped = Bls12::miller_loop([&pair1, &pair2]);
+    let value = looped.final_exponentiation();
+    value.is_identity().into()
 }
 
 fn message(current_round: u64, prev_sig: &[u8]) -> Vec<u8> {
@@ -110,8 +106,8 @@ fn round_to_bytes(round: u64) -> [u8; 8] {
 }
 
 fn msg_to_curve(msg: &[u8]) -> G2Affine {
-    let g = <G2 as HashToCurve<ExpandMsgXmd<sha2::Sha256>>>::hash_to_curve(msg, DOMAIN);
-    g.into_affine()
+    let g: G2Projective = HashToCurve::<ExpandMsgXmd<sha2::Sha256>>::hash_to_curve(msg, DOMAIN);
+    g.into()
 }
 
 #[cfg(test)]
