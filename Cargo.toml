@@ -18,7 +18,7 @@ pairing = { version = "0.22.0" }
 bls12_381 = { version = "0.7.1", features = ["experimental"] }
 sha2 = "0.9"
 hex = { version = "0.4", optional = true }
-wasm-bindgen = { version = "0.2.67", optional = true }
+wasm-bindgen = { version = "0.2.83", optional = true }
 
 [dev-dependencies]
 hex = "0.4"
