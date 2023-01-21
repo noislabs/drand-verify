@@ -1,7 +1,7 @@
 [package]
 name = "drand-verify"
 description = "A drand verification library."
-version = "0.3.0"
+version = "0.4.0"
 authors = ["Simon Warta <simon@warta.it>"]
 edition = "2021"
 license = "Apache-2.0"
@@ -16,7 +16,7 @@ js = ["hex", "wasm-bindgen"]
 [dependencies]
 pairing = { version = "0.22.0" }
 bls12_381 = { version = "0.7.1", features = ["experimental"] }
-sha2 = "0.9"
+sha2 = "0.9.1" # Must be compatible with bls12_381, see https://github.com/zkcrypto/bls12_381/issues/102
 hex = { version = "0.4", optional = true }
 wasm-bindgen = { version = "0.2.83", optional = true }
 
