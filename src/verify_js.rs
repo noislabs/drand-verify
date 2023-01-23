@@ -1,7 +1,7 @@
 use wasm_bindgen::prelude::*;
 
-use super::points::{g1_from_variable, InvalidPoint};
-use super::verify::{verify, VerificationError};
+use super::points::InvalidPoint;
+use super::verify::{verify, Pubkey, VerificationError};
 
 struct VerifyWebError(pub String);
 
@@ -61,7 +61,7 @@ fn verify_beacon_impl(
     previous_signature_hex: &str,
     signature_hex: &str,
 ) -> Result<bool, VerifyWebError> {
-    let pk = g1_from_variable(&hex::decode(pk_hex)?)?;
+    let pk = Pubkey::from_variable(&hex::decode(pk_hex)?)?;
     let previous_signature = hex::decode(previous_signature_hex)?;
     let signature = hex::decode(signature_hex)?;
     let result = verify(&pk, round.into(), &previous_signature, &signature)?;
