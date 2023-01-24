@@ -2,7 +2,7 @@
 
 extern crate test;
 
-use drand_verify::{g1_from_fixed, verify};
+use drand_verify::{verify, G1Pubkey, Pubkey};
 use hex_literal::hex;
 
 /// Public key League of Entropy Mainnet (curl -sS https://drand.cloudflare.com/info)
@@ -10,7 +10,7 @@ const PK_LEO_MAINNET: [u8; 48] = hex!("868f005eb8e6e4ca0a47c8a77ceaa5309a47978a7
 
 #[bench]
 fn bench_verify(b: &mut ::test::Bencher) {
-    let pk = g1_from_fixed(PK_LEO_MAINNET).unwrap();
+    let pk = G1Pubkey::from_fixed(PK_LEO_MAINNET).unwrap();
 
     // curl -sS https://drand.cloudflare.com/public/72785
     let previous_signature = hex::decode("a609e19a03c2fcc559e8dae14900aaefe517cb55c840f6e69bc8e4f66c8d18e8a609685d9917efbfb0c37f058c2de88f13d297c7e19e0ab24813079efe57a182554ff054c7638153f9b26a60e7111f71a0ff63d9571704905d3ca6df0b031747").unwrap();

@@ -1,15 +1,94 @@
 use bls12_381::{
     hash_to_curve::{ExpandMsgXmd, HashToCurve},
-    Bls12, G1Affine, G1Projective, G2Affine, G2Prepared, G2Projective,
+    Bls12, G1Affine, G2Affine, G2Prepared, G2Projective,
 };
 use pairing::{group::Group, MultiMillerLoop};
 use sha2::{Digest, Sha256};
 use std::error::Error;
 use std::fmt;
 
+use crate::{
+    g1_from_fixed, g1_from_fixed_unchecked, g1_from_variable, g2_from_variable, InvalidPoint,
+};
+
 const DOMAIN: &[u8] = b"BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_NUL_";
 
-use super::points::g2_from_variable;
+/// Point on G1
+pub struct G1(G1Affine);
+
+/// Point on G2
+pub struct G2(G2Affine);
+
+pub trait Pubkey: Sized {
+    /// The curve (G1 or G2) on which the public key lives
+    type This;
+
+    /// The type in which this point is expressed in binary data (either `[u8; 48]` or `[u8; 96]`)
+    type ThisCompressed;
+
+    /// The other curve (G2 or G1) on which the signature lives
+    type Other;
+
+    fn msg_to_curve(msg: &[u8]) -> Self::Other;
+
+    fn from_fixed(data: Self::ThisCompressed) -> Result<Self, InvalidPoint>;
+
+    fn from_fixed_unchecked(data: Self::ThisCompressed) -> Result<Self, InvalidPoint>;
+
+    fn from_variable(data: &[u8]) -> Result<Self, InvalidPoint>;
+
+    fn verify_step2(
+        &self,
+        signature: &[u8],
+        msg_on_curve: &Self::Other,
+    ) -> Result<bool, VerificationError>;
+}
+
+pub struct G1Pubkey(G1);
+
+impl Pubkey for G1Pubkey {
+    type This = G1;
+    type ThisCompressed = [u8; 48];
+    type Other = G2;
+
+    fn msg_to_curve(msg: &[u8]) -> Self::Other {
+        let g: G2Projective = HashToCurve::<ExpandMsgXmd<sha2::Sha256>>::hash_to_curve(msg, DOMAIN);
+        G2(g.into())
+    }
+
+    fn from_fixed(data: [u8; 48]) -> Result<Self, InvalidPoint> {
+        Ok(Self(G1(g1_from_fixed(data)?)))
+    }
+
+    fn from_fixed_unchecked(data: [u8; 48]) -> Result<Self, InvalidPoint> {
+        Ok(Self(G1(g1_from_fixed_unchecked(data)?)))
+    }
+
+    fn from_variable(data: &[u8]) -> Result<Self, InvalidPoint> {
+        Ok(Self(G1(g1_from_variable(data)?)))
+    }
+
+    /// Takes this public key and verifies the signature with it.
+    /// The message has to be created with `Self::msg_to_curve`.
+    fn verify_step2(
+        &self,
+        signature: &[u8],
+        msg_on_curve: &Self::Other,
+    ) -> Result<bool, VerificationError> {
+        let g1 = G1Affine::generator();
+        let sigma = match g2_from_variable(signature) {
+            Ok(sigma) => sigma,
+            Err(err) => {
+                return Err(VerificationError::InvalidPoint {
+                    field: "signature".into(),
+                    msg: err.to_string(),
+                })
+            }
+        };
+        let r = (self.0).0;
+        Ok(fast_pairing_equality(&g1, &sigma, &r, &msg_on_curve.0))
+    }
+}
 
 #[derive(Debug)]
 pub enum VerificationError {
@@ -31,33 +110,15 @@ impl Error for VerificationError {}
 /// Checks beacon components to see if they are valid.
 ///
 /// For unchained mode set `previous_signature` to an empty value.
-pub fn verify(
-    pk: &G1Affine,
+pub fn verify<P: Pubkey>(
+    pk: &P,
     round: u64,
     previous_signature: &[u8],
     signature: &[u8],
 ) -> Result<bool, VerificationError> {
     let msg = message(round, previous_signature);
-    let msg_on_g2 = msg_to_curve_g2(&msg);
-    verify_step2(pk, signature, &msg_on_g2)
-}
-
-fn verify_step2(
-    pk: &G1Affine,
-    signature: &[u8],
-    msg_on_g2: &G2Affine,
-) -> Result<bool, VerificationError> {
-    let g1 = G1Affine::generator();
-    let sigma = match g2_from_variable(signature) {
-        Ok(sigma) => sigma,
-        Err(err) => {
-            return Err(VerificationError::InvalidPoint {
-                field: "signature".into(),
-                msg: err.to_string(),
-            })
-        }
-    };
-    Ok(fast_pairing_equality(&g1, &sigma, pk, msg_on_g2))
+    let msg_on_g2 = P::msg_to_curve(&msg);
+    pk.verify_step2(signature, &msg_on_g2)
 }
 
 /// Checks if e(p, q) == e(r, s)
@@ -93,20 +154,9 @@ fn round_to_bytes(round: u64) -> [u8; 8] {
     round.to_be_bytes()
 }
 
-fn msg_to_curve_g1(msg: &[u8]) -> G1Affine {
-    let g: G1Projective = HashToCurve::<ExpandMsgXmd<sha2::Sha256>>::hash_to_curve(msg, DOMAIN);
-    g.into()
-}
-
-fn msg_to_curve_g2(msg: &[u8]) -> G2Affine {
-    let g: G2Projective = HashToCurve::<ExpandMsgXmd<sha2::Sha256>>::hash_to_curve(msg, DOMAIN);
-    g.into()
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::points::g1_from_fixed;
     use hex_literal::hex;
 
     /// Public key League of Entropy Mainnet (curl -sS https://drand.cloudflare.com/info)
@@ -117,7 +167,7 @@ mod tests {
 
     #[test]
     fn verify_works() {
-        let pk = g1_from_fixed(PK_LEO_MAINNET).unwrap();
+        let pk = G1Pubkey::from_fixed(PK_LEO_MAINNET).unwrap();
 
         // curl -sS https://drand.cloudflare.com/public/72785
         let previous_signature = hex::decode("a609e19a03c2fcc559e8dae14900aaefe517cb55c840f6e69bc8e4f66c8d18e8a609685d9917efbfb0c37f058c2de88f13d297c7e19e0ab24813079efe57a182554ff054c7638153f9b26a60e7111f71a0ff63d9571704905d3ca6df0b031747").unwrap();
@@ -146,7 +196,7 @@ mod tests {
 
     #[test]
     fn verify_works_for_unchained() {
-        let pk = g1_from_fixed(PK_UNCHAINED_TESTNET).unwrap();
+        let pk = G1Pubkey::from_fixed(PK_UNCHAINED_TESTNET).unwrap();
 
         // curl -sS https://pl-us.testnet.drand.sh/7672797f548f3f4748ac4bf3352fc6c6b6468c9ad40ad456a397545c6e2df5bf/public/223344
         let signature = hex::decode("94f6b85df7cce7237e8e7df66d794ddad092de5d8bb6a791b97e905aa89852e506ac36a792eba7021e22eebf34891f8914bf9a8dd9233ea0a4c5ca00ef8404999f899073dd2eade61fe54077fee8168f83dcb61a758b6883b38904054e64a433").unwrap();
