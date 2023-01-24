@@ -37,13 +37,9 @@ pub fn verify(
     previous_signature: &[u8],
     signature: &[u8],
 ) -> Result<bool, VerificationError> {
-    let msg_on_g2 = verify_step1(round, previous_signature);
-    verify_step2(pk, signature, &msg_on_g2)
-}
-
-fn verify_step1(round: u64, previous_signature: &[u8]) -> G2Affine {
     let msg = message(round, previous_signature);
-    msg_to_curve_g2(&msg)
+    let msg_on_g2 = msg_to_curve_g2(&msg);
+    verify_step2(pk, signature, &msg_on_g2)
 }
 
 fn verify_step2(
