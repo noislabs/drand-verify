@@ -7,7 +7,7 @@ use sha2::{Digest, Sha256};
 use std::error::Error;
 use std::fmt;
 
-use crate::{
+use crate::points::{
     g1_from_fixed, g1_from_fixed_unchecked, g1_from_variable, g2_from_fixed,
     g2_from_fixed_unchecked, g2_from_variable, InvalidPoint,
 };
