@@ -10,4 +10,4 @@ pub use points::{
     InvalidPoint,
 };
 pub use randomness::derive_randomness;
-pub use verify::{verify, G1Pubkey, Pubkey, VerificationError};
+pub use verify::{verify, G1Pubkey, G2Pubkey, Pubkey, VerificationError};
