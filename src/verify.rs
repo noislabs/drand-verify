@@ -1,6 +1,6 @@
 use bls12_381::{
     hash_to_curve::{ExpandMsgXmd, HashToCurve},
-    Bls12, G1Affine, G2Affine, G2Prepared, G2Projective,
+    Bls12, G1Affine, G1Projective, G2Affine, G2Prepared, G2Projective,
 };
 use pairing::{group::Group, MultiMillerLoop};
 use sha2::{Digest, Sha256};
@@ -43,7 +43,7 @@ pub fn verify(
 
 fn verify_step1(round: u64, previous_signature: &[u8]) -> G2Affine {
     let msg = message(round, previous_signature);
-    msg_to_curve(&msg)
+    msg_to_curve_g2(&msg)
 }
 
 fn verify_step2(
@@ -97,7 +97,12 @@ fn round_to_bytes(round: u64) -> [u8; 8] {
     round.to_be_bytes()
 }
 
-fn msg_to_curve(msg: &[u8]) -> G2Affine {
+fn msg_to_curve_g1(msg: &[u8]) -> G1Affine {
+    let g: G1Projective = HashToCurve::<ExpandMsgXmd<sha2::Sha256>>::hash_to_curve(msg, DOMAIN);
+    g.into()
+}
+
+fn msg_to_curve_g2(msg: &[u8]) -> G2Affine {
     let g: G2Projective = HashToCurve::<ExpandMsgXmd<sha2::Sha256>>::hash_to_curve(msg, DOMAIN);
     g.into()
 }
