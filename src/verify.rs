@@ -38,11 +38,27 @@ pub trait Pubkey: Sized {
 
     fn from_variable(data: &[u8]) -> Result<Self, InvalidPoint>;
 
+    /// This is part of `verify` but you can call it explicitely in case you already
+    /// have a message hashed to the curve.
     fn verify_step2(
         &self,
         signature: &[u8],
         msg_on_curve: &Self::Other,
     ) -> Result<bool, VerificationError>;
+
+    /// The high level verification method for a drand beacon.
+    ///
+    /// `previous_signature` should be set to an empty slice for the unchained mode.
+    fn verify(
+        &self,
+        round: u64,
+        previous_signature: &[u8],
+        signature: &[u8],
+    ) -> Result<bool, VerificationError> {
+        let msg = message(round, previous_signature);
+        let msg_on_curve = Self::msg_to_curve(&msg);
+        self.verify_step2(signature, &msg_on_curve)
+    }
 }
 
 pub struct G1Pubkey(G1);
@@ -163,9 +179,7 @@ pub fn verify<P: Pubkey>(
     previous_signature: &[u8],
     signature: &[u8],
 ) -> Result<bool, VerificationError> {
-    let msg = message(round, previous_signature);
-    let msg_on_curve = P::msg_to_curve(&msg);
-    pk.verify_step2(signature, &msg_on_curve)
+    pk.verify(round, previous_signature, signature)
 }
 
 /// Checks if e(p, q) == e(r, s)
