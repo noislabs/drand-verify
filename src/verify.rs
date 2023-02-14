@@ -280,12 +280,9 @@ mod tests {
 
     #[test]
     fn verify_works_for_g1g2_swapped() {
-        // Test vectors provided by Yolan Romailler
-
-        /// Public key for G1/G2 swap
-        const PK_SWAPPED: [u8; 96] = hex!("876f6fa8073736e22f6ff4badaab35c637503718f7a452d178ce69c45d2d8129a54ad2f988ab10c9666f87ab603c59bf013409a5b500555da31720f8eec294d9809b8796f40d5372c71a44ca61226f1eb978310392f98074a608747f77e66c5a");
-
-        let pk = G2Pubkey::from_fixed(PK_SWAPPED).unwrap();
+        // Test vectors (Public key for G1/G2 swaped) provided by Yolan Romailler
+        const PK_HEX: [u8; 96] = hex!("876f6fa8073736e22f6ff4badaab35c637503718f7a452d178ce69c45d2d8129a54ad2f988ab10c9666f87ab603c59bf013409a5b500555da31720f8eec294d9809b8796f40d5372c71a44ca61226f1eb978310392f98074a608747f77e66c5a");
+        let pk = G2Pubkey::from_fixed(PK_HEX).unwrap();
 
         let signature = hex::decode("ac7c3ca14bc88bd014260f22dc016b4fe586f9313c3a549c83d195811a99a5d2d4999d4df6daec73ff51fafadd6d5bb5").unwrap();
         let round: u64 = 3;
@@ -294,6 +291,20 @@ mod tests {
 
         let signature = hex::decode("b4448d565ccad16beb6502f0cf84b4b8d4a67845ba894308a188731b8eb8fc5eb1b5bdcdcd370271436e1475c4786a4e").unwrap();
         let round: u64 = 4;
+        let result = verify(&pk, round, b"", &signature).unwrap();
+        assert!(result);
+
+        // Tests from https://pl-us.testnet.drand.sh/f3827d772c155f95a9fda8901ddd59591a082df5ac6efe3a479ddb1f5eeb202c/info
+        const PK_HEX2: [u8; 96] = hex!("8f6e58c3dbc6d7e58e32baee6881fecc854161b4227c40b01ae7f0593cea964599648f91a0fa2d6b489a7fb0a552b959014007e05d0c069991be4d064bbe28275bd4c3a3cabf16c48f86f4566909dd6eb6d0e84fd6069c414562ca6abf5fdc13");
+        let pk = G2Pubkey::from_fixed(PK_HEX2).unwrap();
+
+        let signature = hex::decode("a7fdfc9c5c31ba96011e89931668239daa368eaf2fbd03fafa38e0c336d0653d921f114b65ceb1a9ef781492d61e0d0a").unwrap();
+        let round: u64 = 375953;
+        let result = verify(&pk, round, b"", &signature).unwrap();
+        assert!(result);
+
+        let signature = hex::decode("b8fe4f9f0fe05a70b027460379d30b02775b7cf625755bf304a94ac2bddb08609fdfbfc23c75c671d6e0a5727392507f").unwrap();
+        let round: u64 = 375965;
         let result = verify(&pk, round, b"", &signature).unwrap();
         assert!(result);
     }
