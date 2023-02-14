@@ -164,8 +164,8 @@ pub fn verify<P: Pubkey>(
     signature: &[u8],
 ) -> Result<bool, VerificationError> {
     let msg = message(round, previous_signature);
-    let msg_on_g2 = P::msg_to_curve(&msg);
-    pk.verify_step2(signature, &msg_on_g2)
+    let msg_on_curve = P::msg_to_curve(&msg);
+    pk.verify_step2(signature, &msg_on_curve)
 }
 
 /// Checks if e(p, q) == e(r, s)
