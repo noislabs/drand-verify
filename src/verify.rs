@@ -1,15 +1,157 @@
 use bls12_381::{
     hash_to_curve::{ExpandMsgXmd, HashToCurve},
-    Bls12, G1Affine, G2Affine, G2Prepared, G2Projective,
+    Bls12, G1Affine, G1Projective, G2Affine, G2Prepared, G2Projective,
 };
 use pairing::{group::Group, MultiMillerLoop};
 use sha2::{Digest, Sha256};
 use std::error::Error;
 use std::fmt;
 
+use crate::points::{
+    g1_from_fixed, g1_from_fixed_unchecked, g1_from_variable, g2_from_fixed,
+    g2_from_fixed_unchecked, g2_from_variable, InvalidPoint,
+};
+
 const DOMAIN: &[u8] = b"BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_NUL_";
 
-use super::points::g2_from_variable;
+/// Point on G1
+pub struct G1(G1Affine);
+
+/// Point on G2
+pub struct G2(G2Affine);
+
+pub trait Pubkey: Sized {
+    /// The curve (G1 or G2) on which the public key lives
+    type This;
+
+    /// The type in which this point is expressed in binary data (either `[u8; 48]` or `[u8; 96]`)
+    type ThisCompressed;
+
+    /// The other curve (G2 or G1) on which the signature lives
+    type Other;
+
+    fn msg_to_curve(msg: &[u8]) -> Self::Other;
+
+    fn from_fixed(data: Self::ThisCompressed) -> Result<Self, InvalidPoint>;
+
+    fn from_fixed_unchecked(data: Self::ThisCompressed) -> Result<Self, InvalidPoint>;
+
+    fn from_variable(data: &[u8]) -> Result<Self, InvalidPoint>;
+
+    /// This is part of `verify` but you can call it explicitely in case you already
+    /// have a message hashed to the curve.
+    fn verify_step2(
+        &self,
+        signature: &[u8],
+        msg_on_curve: &Self::Other,
+    ) -> Result<bool, VerificationError>;
+
+    /// The high level verification method for a drand beacon.
+    ///
+    /// `previous_signature` should be set to an empty slice for the unchained mode.
+    fn verify(
+        &self,
+        round: u64,
+        previous_signature: &[u8],
+        signature: &[u8],
+    ) -> Result<bool, VerificationError> {
+        let msg = message(round, previous_signature);
+        let msg_on_curve = Self::msg_to_curve(&msg);
+        self.verify_step2(signature, &msg_on_curve)
+    }
+}
+
+pub struct G1Pubkey(G1);
+
+impl Pubkey for G1Pubkey {
+    type This = G1;
+    type ThisCompressed = [u8; 48];
+    type Other = G2;
+
+    fn msg_to_curve(msg: &[u8]) -> Self::Other {
+        let g: G2Projective = HashToCurve::<ExpandMsgXmd<sha2::Sha256>>::hash_to_curve(msg, DOMAIN);
+        G2(g.into())
+    }
+
+    fn from_fixed(data: [u8; 48]) -> Result<Self, InvalidPoint> {
+        Ok(Self(G1(g1_from_fixed(data)?)))
+    }
+
+    fn from_fixed_unchecked(data: [u8; 48]) -> Result<Self, InvalidPoint> {
+        Ok(Self(G1(g1_from_fixed_unchecked(data)?)))
+    }
+
+    fn from_variable(data: &[u8]) -> Result<Self, InvalidPoint> {
+        Ok(Self(G1(g1_from_variable(data)?)))
+    }
+
+    /// Takes this public key and verifies the signature with it.
+    /// The message has to be created with `Self::msg_to_curve`.
+    fn verify_step2(
+        &self,
+        signature: &[u8],
+        msg_on_curve: &Self::Other,
+    ) -> Result<bool, VerificationError> {
+        let g1 = G1Affine::generator();
+        let sigma = match g2_from_variable(signature) {
+            Ok(sigma) => sigma,
+            Err(err) => {
+                return Err(VerificationError::InvalidPoint {
+                    field: "signature".into(),
+                    msg: err.to_string(),
+                })
+            }
+        };
+        let r = (self.0).0;
+        Ok(fast_pairing_equality(&g1, &sigma, &r, &msg_on_curve.0))
+    }
+}
+
+pub struct G2Pubkey(G2);
+
+impl Pubkey for G2Pubkey {
+    type This = G2;
+    type ThisCompressed = [u8; 96];
+    type Other = G1;
+
+    fn msg_to_curve(msg: &[u8]) -> Self::Other {
+        let g: G1Projective = HashToCurve::<ExpandMsgXmd<sha2::Sha256>>::hash_to_curve(msg, DOMAIN);
+        G1(g.into())
+    }
+
+    fn from_fixed(data: [u8; 96]) -> Result<Self, InvalidPoint> {
+        Ok(Self(G2(g2_from_fixed(data)?)))
+    }
+
+    fn from_fixed_unchecked(data: [u8; 96]) -> Result<Self, InvalidPoint> {
+        Ok(Self(G2(g2_from_fixed_unchecked(data)?)))
+    }
+
+    fn from_variable(data: &[u8]) -> Result<Self, InvalidPoint> {
+        Ok(Self(G2(g2_from_variable(data)?)))
+    }
+
+    /// Takes this public key and verifies the signature with it.
+    /// The message has to be created with `Self::msg_to_curve`.
+    fn verify_step2(
+        &self,
+        signature: &[u8],
+        msg_on_curve: &Self::Other,
+    ) -> Result<bool, VerificationError> {
+        let g2 = G2Affine::generator();
+        let sigma = match g1_from_variable(signature) {
+            Ok(sigma) => sigma,
+            Err(err) => {
+                return Err(VerificationError::InvalidPoint {
+                    field: "signature".into(),
+                    msg: err.to_string(),
+                })
+            }
+        };
+        let s = (self.0).0;
+        Ok(fast_pairing_equality(&sigma, &g2, &msg_on_curve.0, &s))
+    }
+}
 
 #[derive(Debug)]
 pub enum VerificationError {
@@ -31,47 +173,13 @@ impl Error for VerificationError {}
 /// Checks beacon components to see if they are valid.
 ///
 /// For unchained mode set `previous_signature` to an empty value.
-pub fn verify(
-    pk: &G1Affine,
+pub fn verify<P: Pubkey>(
+    pk: &P,
     round: u64,
     previous_signature: &[u8],
     signature: &[u8],
 ) -> Result<bool, VerificationError> {
-    let msg_on_g2 = verify_step1(round, previous_signature);
-    verify_step2(pk, signature, &msg_on_g2)
-}
-
-/// First step of the verification.
-/// Should not be used directly in most cases. Use [`verify`] instead.
-///
-/// This API is not stable.
-#[doc(hidden)]
-pub fn verify_step1(round: u64, previous_signature: &[u8]) -> G2Affine {
-    let msg = message(round, previous_signature);
-    msg_to_curve(&msg)
-}
-
-/// Second step of the verification.
-/// Should not be used directly in most cases. Use [`verify`] instead.
-///
-/// This API is not stable.
-#[doc(hidden)]
-pub fn verify_step2(
-    pk: &G1Affine,
-    signature: &[u8],
-    msg_on_g2: &G2Affine,
-) -> Result<bool, VerificationError> {
-    let g1 = G1Affine::generator();
-    let sigma = match g2_from_variable(signature) {
-        Ok(sigma) => sigma,
-        Err(err) => {
-            return Err(VerificationError::InvalidPoint {
-                field: "signature".into(),
-                msg: err.to_string(),
-            })
-        }
-    };
-    Ok(fast_pairing_equality(&g1, &sigma, pk, msg_on_g2))
+    pk.verify(round, previous_signature, signature)
 }
 
 /// Checks if e(p, q) == e(r, s)
@@ -107,15 +215,9 @@ fn round_to_bytes(round: u64) -> [u8; 8] {
     round.to_be_bytes()
 }
 
-fn msg_to_curve(msg: &[u8]) -> G2Affine {
-    let g: G2Projective = HashToCurve::<ExpandMsgXmd<sha2::Sha256>>::hash_to_curve(msg, DOMAIN);
-    g.into()
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::points::g1_from_fixed;
     use hex_literal::hex;
 
     /// Public key League of Entropy Mainnet (curl -sS https://drand.cloudflare.com/info)
@@ -126,7 +228,7 @@ mod tests {
 
     #[test]
     fn verify_works() {
-        let pk = g1_from_fixed(PK_LEO_MAINNET).unwrap();
+        let pk = G1Pubkey::from_fixed(PK_LEO_MAINNET).unwrap();
 
         // curl -sS https://drand.cloudflare.com/public/72785
         let previous_signature = hex::decode("a609e19a03c2fcc559e8dae14900aaefe517cb55c840f6e69bc8e4f66c8d18e8a609685d9917efbfb0c37f058c2de88f13d297c7e19e0ab24813079efe57a182554ff054c7638153f9b26a60e7111f71a0ff63d9571704905d3ca6df0b031747").unwrap();
@@ -155,7 +257,7 @@ mod tests {
 
     #[test]
     fn verify_works_for_unchained() {
-        let pk = g1_from_fixed(PK_UNCHAINED_TESTNET).unwrap();
+        let pk = G1Pubkey::from_fixed(PK_UNCHAINED_TESTNET).unwrap();
 
         // curl -sS https://pl-us.testnet.drand.sh/7672797f548f3f4748ac4bf3352fc6c6b6468c9ad40ad456a397545c6e2df5bf/public/223344
         let signature = hex::decode("94f6b85df7cce7237e8e7df66d794ddad092de5d8bb6a791b97e905aa89852e506ac36a792eba7021e22eebf34891f8914bf9a8dd9233ea0a4c5ca00ef8404999f899073dd2eade61fe54077fee8168f83dcb61a758b6883b38904054e64a433").unwrap();
@@ -174,5 +276,36 @@ mod tests {
         let wrong_signature = hex::decode("86ecea71376e78abd19aaf0ad52f462a6483626563b1023bd04815a7b953da888c74f5bf6ee672a5688603ab310026230522898f33f23a7de363c66f90ffd49ec77ebf7f6c1478a9ecd6e714b4d532ab43d044da0a16fed13b4791d7fc999e2b").unwrap();
         let result = verify(&pk, round, b"", &wrong_signature).unwrap();
         assert!(!result);
+    }
+
+    #[test]
+    fn verify_works_for_g1g2_swapped() {
+        // Test vectors (Public key for G1/G2 swaped) provided by Yolan Romailler
+        const PK_HEX: [u8; 96] = hex!("876f6fa8073736e22f6ff4badaab35c637503718f7a452d178ce69c45d2d8129a54ad2f988ab10c9666f87ab603c59bf013409a5b500555da31720f8eec294d9809b8796f40d5372c71a44ca61226f1eb978310392f98074a608747f77e66c5a");
+        let pk = G2Pubkey::from_fixed(PK_HEX).unwrap();
+
+        let signature = hex::decode("ac7c3ca14bc88bd014260f22dc016b4fe586f9313c3a549c83d195811a99a5d2d4999d4df6daec73ff51fafadd6d5bb5").unwrap();
+        let round: u64 = 3;
+        let result = verify(&pk, round, b"", &signature).unwrap();
+        assert!(result);
+
+        let signature = hex::decode("b4448d565ccad16beb6502f0cf84b4b8d4a67845ba894308a188731b8eb8fc5eb1b5bdcdcd370271436e1475c4786a4e").unwrap();
+        let round: u64 = 4;
+        let result = verify(&pk, round, b"", &signature).unwrap();
+        assert!(result);
+
+        // Tests from https://pl-us.testnet.drand.sh/f3827d772c155f95a9fda8901ddd59591a082df5ac6efe3a479ddb1f5eeb202c/info
+        const PK_HEX2: [u8; 96] = hex!("8f6e58c3dbc6d7e58e32baee6881fecc854161b4227c40b01ae7f0593cea964599648f91a0fa2d6b489a7fb0a552b959014007e05d0c069991be4d064bbe28275bd4c3a3cabf16c48f86f4566909dd6eb6d0e84fd6069c414562ca6abf5fdc13");
+        let pk = G2Pubkey::from_fixed(PK_HEX2).unwrap();
+
+        let signature = hex::decode("a7fdfc9c5c31ba96011e89931668239daa368eaf2fbd03fafa38e0c336d0653d921f114b65ceb1a9ef781492d61e0d0a").unwrap();
+        let round: u64 = 375953;
+        let result = verify(&pk, round, b"", &signature).unwrap();
+        assert!(result);
+
+        let signature = hex::decode("b8fe4f9f0fe05a70b027460379d30b02775b7cf625755bf304a94ac2bddb08609fdfbfc23c75c671d6e0a5727392507f").unwrap();
+        let round: u64 = 375965;
+        let result = verify(&pk, round, b"", &signature).unwrap();
+        assert!(result);
     }
 }
