@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2023-03-03
+
 ### Changed
 
 - Refactor codebase to support G1/G2 swap ([#19]).
@@ -24,5 +26,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Migrate from paired to pairing.
   This increases the code size but reduces the verification cost.
 
-[unreleased]: https://github.com/noislabs/drand-verify/compare/v0.4.0...HEAD
+[unreleased]: https://github.com/noislabs/drand-verify/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/noislabs/drand-verify/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/noislabs/drand-verify/compare/v0.3.0...v0.4.0
