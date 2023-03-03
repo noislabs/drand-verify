@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Refactor codebase to support G1/G2 swap ([#19]).
+
+[#19]: https://github.com/noislabs/drand-verify/pull/19
+
 ## [0.4.0]
 
 ### Added
