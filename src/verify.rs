@@ -307,5 +307,21 @@ mod tests {
         let round: u64 = 375965;
         let result = verify(&pk, round, b"", &signature).unwrap();
         assert!(result);
+
+        // Tests from https://api3.drand.sh/dbd506d6ef76e5f386f41c651dcb808c5bcbd75471cc4eafa3f4df7ad4e4c493/info
+        const PK_HEX3: [u8; 96] = hex!("a0b862a7527fee3a731bcb59280ab6abd62d5c0b6ea03dc4ddf6612fdfc9d01f01c31542541771903475eb1ec6615f8d0df0b8b6dce385811d6dcf8cbefb8759e5e616a3dfd054c928940766d9a5b9db91e3b697e5d70a975181e007f87fca5e");
+        let pk = G2Pubkey::from_fixed(PK_HEX3).unwrap();
+
+        // https://api3.drand.sh/dbd506d6ef76e5f386f41c651dcb808c5bcbd75471cc4eafa3f4df7ad4e4c493/public/1
+        let signature = hex::decode("9544ddce2fdbe8688d6f5b4f98eed5d63eee3902e7e162050ac0f45905a55657714880adabe3c3096b92767d886567d0").unwrap();
+        let round: u64 = 1;
+        let result = verify(&pk, round, b"", &signature).unwrap();
+        assert!(result);
+
+        // https://api3.drand.sh/dbd506d6ef76e5f386f41c651dcb808c5bcbd75471cc4eafa3f4df7ad4e4c493/public/23456
+        let signature = hex::decode("98401ef9833e75bf06fda3243e4fcf6d075d62b45c2a59d26df5d5fcbdfd0c14ee89fc035abd5528a8c25b68fbecae65").unwrap();
+        let round: u64 = 23456;
+        let result = verify(&pk, round, b"", &signature).unwrap();
+        assert!(result);
     }
 }
