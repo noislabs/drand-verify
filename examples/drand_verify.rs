@@ -2,7 +2,7 @@ use hex_literal::hex;
 use std::env;
 use std::process::exit;
 
-use drand_verify::{derive_randomness, verify, G1Pubkey, Pubkey};
+use drand_verify::{derive_randomness, G1Pubkey, Pubkey};
 
 /// Public key League of Entropy Mainnet (curl -sS https://drand.cloudflare.com/info)
 const PK_LEO_MAINNET: [u8; 48] = hex!("868f005eb8e6e4ca0a47c8a77ceaa5309a47978a7c71bc5cce96366b5d7a569937c529eeda66c7293784a9402801af31");
@@ -21,7 +21,7 @@ fn main_impl() -> i32 {
     let previous_signature = hex::decode(&args[2]).unwrap();
     let signature = hex::decode(&args[3]).unwrap();
 
-    match verify(&pk, round, &previous_signature, &signature) {
+    match pk.verify(round, &previous_signature, &signature) {
         Err(err) => {
             eprintln!("Error during verification: {}", err);
             12

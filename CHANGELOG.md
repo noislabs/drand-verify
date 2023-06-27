@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Remove free function `verify`. Use `Pubkey::verify` instead. ([#20])
+
+[#20]: https://github.com/noislabs/drand-verify/issues/20
+
 ## [0.5.0] - 2023-03-03
 
 ### Changed

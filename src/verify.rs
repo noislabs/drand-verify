@@ -170,18 +170,6 @@ impl fmt::Display for VerificationError {
 
 impl Error for VerificationError {}
 
-/// Checks beacon components to see if they are valid.
-///
-/// For unchained mode set `previous_signature` to an empty value.
-pub fn verify<P: Pubkey>(
-    pk: &P,
-    round: u64,
-    previous_signature: &[u8],
-    signature: &[u8],
-) -> Result<bool, VerificationError> {
-    pk.verify(round, previous_signature, signature)
-}
-
 /// Checks if e(p, q) == e(r, s)
 ///
 /// See https://hackmd.io/@benjaminion/bls12-381#Final-exponentiation.
@@ -236,22 +224,26 @@ mod tests {
         let round: u64 = 72785;
 
         // good
-        let result = verify(&pk, round, &previous_signature, &signature).unwrap();
+        let result = pk.verify(round, &previous_signature, &signature).unwrap();
         assert!(result);
 
         // wrong round
-        let result = verify(&pk, 321, &previous_signature, &signature).unwrap();
+        let result = pk.verify(321, &previous_signature, &signature).unwrap();
         assert!(!result);
 
         // wrong previous signature
         let previous_signature_corrupted = hex::decode("6a09e19a03c2fcc559e8dae14900aaefe517cb55c840f6e69bc8e4f66c8d18e8a609685d9917efbfb0c37f058c2de88f13d297c7e19e0ab24813079efe57a182554ff054c7638153f9b26a60e7111f71a0ff63d9571704905d3ca6df0b031747").unwrap();
-        let result = verify(&pk, round, &previous_signature_corrupted, &signature).unwrap();
+        let result = pk
+            .verify(round, &previous_signature_corrupted, &signature)
+            .unwrap();
         assert!(!result);
 
         // wrong signature
         // (use signature from https://drand.cloudflare.com/public/1 to get a valid curve point)
         let wrong_signature = hex::decode("8d61d9100567de44682506aea1a7a6fa6e5491cd27a0a0ed349ef6910ac5ac20ff7bc3e09d7c046566c9f7f3c6f3b10104990e7cb424998203d8f7de586fb7fa5f60045417a432684f85093b06ca91c769f0e7ca19268375e659c2a2352b4655").unwrap();
-        let result = verify(&pk, round, &previous_signature, &wrong_signature).unwrap();
+        let result = pk
+            .verify(round, &previous_signature, &wrong_signature)
+            .unwrap();
         assert!(!result);
     }
 
@@ -264,17 +256,17 @@ mod tests {
         let round: u64 = 223344;
 
         // good
-        let result = verify(&pk, round, b"", &signature).unwrap();
+        let result = pk.verify(round, b"", &signature).unwrap();
         assert!(result);
 
         // wrong round
-        let result = verify(&pk, round - 1, b"", &signature).unwrap();
+        let result = pk.verify(round - 1, b"", &signature).unwrap();
         assert!(!result);
 
         // wrong signature
         // (use signature from https://pl-us.testnet.drand.sh/7672797f548f3f4748ac4bf3352fc6c6b6468c9ad40ad456a397545c6e2df5bf/public/1 to get a valid curve point)
         let wrong_signature = hex::decode("86ecea71376e78abd19aaf0ad52f462a6483626563b1023bd04815a7b953da888c74f5bf6ee672a5688603ab310026230522898f33f23a7de363c66f90ffd49ec77ebf7f6c1478a9ecd6e714b4d532ab43d044da0a16fed13b4791d7fc999e2b").unwrap();
-        let result = verify(&pk, round, b"", &wrong_signature).unwrap();
+        let result = pk.verify(round, b"", &wrong_signature).unwrap();
         assert!(!result);
     }
 
@@ -286,12 +278,12 @@ mod tests {
 
         let signature = hex::decode("ac7c3ca14bc88bd014260f22dc016b4fe586f9313c3a549c83d195811a99a5d2d4999d4df6daec73ff51fafadd6d5bb5").unwrap();
         let round: u64 = 3;
-        let result = verify(&pk, round, b"", &signature).unwrap();
+        let result = pk.verify(round, b"", &signature).unwrap();
         assert!(result);
 
         let signature = hex::decode("b4448d565ccad16beb6502f0cf84b4b8d4a67845ba894308a188731b8eb8fc5eb1b5bdcdcd370271436e1475c4786a4e").unwrap();
         let round: u64 = 4;
-        let result = verify(&pk, round, b"", &signature).unwrap();
+        let result = pk.verify(round, b"", &signature).unwrap();
         assert!(result);
 
         // Tests from https://pl-us.testnet.drand.sh/f3827d772c155f95a9fda8901ddd59591a082df5ac6efe3a479ddb1f5eeb202c/info
@@ -300,12 +292,12 @@ mod tests {
 
         let signature = hex::decode("a7fdfc9c5c31ba96011e89931668239daa368eaf2fbd03fafa38e0c336d0653d921f114b65ceb1a9ef781492d61e0d0a").unwrap();
         let round: u64 = 375953;
-        let result = verify(&pk, round, b"", &signature).unwrap();
+        let result = pk.verify(round, b"", &signature).unwrap();
         assert!(result);
 
         let signature = hex::decode("b8fe4f9f0fe05a70b027460379d30b02775b7cf625755bf304a94ac2bddb08609fdfbfc23c75c671d6e0a5727392507f").unwrap();
         let round: u64 = 375965;
-        let result = verify(&pk, round, b"", &signature).unwrap();
+        let result = pk.verify(round, b"", &signature).unwrap();
         assert!(result);
 
         // Tests from https://api3.drand.sh/dbd506d6ef76e5f386f41c651dcb808c5bcbd75471cc4eafa3f4df7ad4e4c493/info
@@ -315,13 +307,13 @@ mod tests {
         // https://api3.drand.sh/dbd506d6ef76e5f386f41c651dcb808c5bcbd75471cc4eafa3f4df7ad4e4c493/public/1
         let signature = hex::decode("9544ddce2fdbe8688d6f5b4f98eed5d63eee3902e7e162050ac0f45905a55657714880adabe3c3096b92767d886567d0").unwrap();
         let round: u64 = 1;
-        let result = verify(&pk, round, b"", &signature).unwrap();
+        let result = pk.verify(round, b"", &signature).unwrap();
         assert!(result);
 
         // https://api3.drand.sh/dbd506d6ef76e5f386f41c651dcb808c5bcbd75471cc4eafa3f4df7ad4e4c493/public/23456
         let signature = hex::decode("98401ef9833e75bf06fda3243e4fcf6d075d62b45c2a59d26df5d5fcbdfd0c14ee89fc035abd5528a8c25b68fbecae65").unwrap();
         let round: u64 = 23456;
-        let result = verify(&pk, round, b"", &signature).unwrap();
+        let result = pk.verify(round, b"", &signature).unwrap();
         assert!(result);
     }
 }
