@@ -1,6 +1,6 @@
 use wasm_bindgen::prelude::*;
 
-use crate::{verify, G1Pubkey, InvalidPoint, Pubkey, VerificationError};
+use crate::{G1Pubkey, InvalidPoint, Pubkey, VerificationError};
 
 struct VerifyWebError(pub String);
 
@@ -63,6 +63,6 @@ fn verify_beacon_impl(
     let pk = G1Pubkey::from_variable(&hex::decode(pk_hex)?)?;
     let previous_signature = hex::decode(previous_signature_hex)?;
     let signature = hex::decode(signature_hex)?;
-    let result = verify(&pk, round.into(), &previous_signature, &signature)?;
+    let result = pk.verify(round.into(), &previous_signature, &signature)?;
     Ok(result)
 }

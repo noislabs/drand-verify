@@ -2,7 +2,7 @@
 
 extern crate test;
 
-use drand_verify::{verify, G1Pubkey, Pubkey};
+use drand_verify::{G1Pubkey, Pubkey};
 use hex_literal::hex;
 
 /// Public key League of Entropy Mainnet (curl -sS https://drand.cloudflare.com/info)
@@ -18,7 +18,7 @@ fn bench_verify(b: &mut ::test::Bencher) {
     let round: u64 = 72785;
 
     b.iter(|| {
-        let result = verify(&pk, round, &previous_signature, &signature).unwrap();
+        let result = pk.verify(round, &previous_signature, &signature).unwrap();
         result
     });
 }
