@@ -13,6 +13,7 @@ This can be used by other crates or be compiled to a Wasm blob (< 500 kilobytes)
 - Supports [unchained mode] ✅
 - G1/G2 swap ✅
 - API does not expose types of the BLS implementation ✅
+- Supports [bls-unchained-g1-rfc9380](https://github.com/drand/drand/pull/1249) ✅
 
 Next up:
 

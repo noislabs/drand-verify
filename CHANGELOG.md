@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add `G2PubkeyRfc` to support [bls-unchained-g1-rfc9380](https://github.com/drand/drand/pull/1249) networks. ([#22])
+
+[#22]: https://github.com/noislabs/drand-verify/pull/22
+
 ### Changed
 
 - Remove free function `verify`. Use `Pubkey::verify` instead. ([#20])
