@@ -121,6 +121,8 @@ impl Pubkey for G2Pubkey {
     type Other = G1;
 
     fn msg_to_curve(msg: &[u8]) -> Self::Other {
+        // The usage of DOMAIN_HASH_TO_G2 here is needed to be compatible to a bug in drand's fastnet.
+        // See https://github.com/noislabs/drand-verify/pull/22 for more information about that topic.
         let g: G1Projective =
             HashToCurve::<ExpandMsgXmd<sha2::Sha256>>::hash_to_curve(msg, DOMAIN_HASH_TO_G2);
         G1(g.into())
