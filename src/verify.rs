@@ -12,7 +12,10 @@ use crate::points::{
     g2_from_fixed_unchecked, g2_from_variable, InvalidPoint,
 };
 
-const DOMAIN: &[u8] = b"BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_NUL_";
+// See https://github.com/drand/kyber-bls12381/issues/22 and
+// https://github.com/drand/drand/pull/1249
+const DOMAIN_HASH_TO_G2: &[u8] = b"BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_NUL_";
+const DOMAIN_HASH_TO_G1: &[u8] = b"BLS_SIG_BLS12381G1_XMD:SHA-256_SSWU_RO_NUL_";
 
 /// Point on G1
 pub struct G1(G1Affine);
@@ -61,6 +64,7 @@ pub trait Pubkey: Sized {
     }
 }
 
+/// The pubkey type for drand networks with scheme ID pedersen-bls-chained or pedersen-bls-unchained.
 pub struct G1Pubkey(G1);
 
 impl Pubkey for G1Pubkey {
@@ -69,7 +73,8 @@ impl Pubkey for G1Pubkey {
     type Other = G2;
 
     fn msg_to_curve(msg: &[u8]) -> Self::Other {
-        let g: G2Projective = HashToCurve::<ExpandMsgXmd<sha2::Sha256>>::hash_to_curve(msg, DOMAIN);
+        let g: G2Projective =
+            HashToCurve::<ExpandMsgXmd<sha2::Sha256>>::hash_to_curve(msg, DOMAIN_HASH_TO_G2);
         G2(g.into())
     }
 
@@ -107,6 +112,7 @@ impl Pubkey for G1Pubkey {
     }
 }
 
+/// The pubkey type for drand networks with scheme ID bls-unchained-on-g1.
 pub struct G2Pubkey(G2);
 
 impl Pubkey for G2Pubkey {
@@ -115,7 +121,58 @@ impl Pubkey for G2Pubkey {
     type Other = G1;
 
     fn msg_to_curve(msg: &[u8]) -> Self::Other {
-        let g: G1Projective = HashToCurve::<ExpandMsgXmd<sha2::Sha256>>::hash_to_curve(msg, DOMAIN);
+        // The usage of DOMAIN_HASH_TO_G2 here is needed to be compatible to a bug in drand's fastnet.
+        // See https://github.com/noislabs/drand-verify/pull/22 for more information about that topic.
+        let g: G1Projective =
+            HashToCurve::<ExpandMsgXmd<sha2::Sha256>>::hash_to_curve(msg, DOMAIN_HASH_TO_G2);
+        G1(g.into())
+    }
+
+    fn from_fixed(data: [u8; 96]) -> Result<Self, InvalidPoint> {
+        Ok(Self(G2(g2_from_fixed(data)?)))
+    }
+
+    fn from_fixed_unchecked(data: [u8; 96]) -> Result<Self, InvalidPoint> {
+        Ok(Self(G2(g2_from_fixed_unchecked(data)?)))
+    }
+
+    fn from_variable(data: &[u8]) -> Result<Self, InvalidPoint> {
+        Ok(Self(G2(g2_from_variable(data)?)))
+    }
+
+    /// Takes this public key and verifies the signature with it.
+    /// The message has to be created with `Self::msg_to_curve`.
+    fn verify_step2(
+        &self,
+        signature: &[u8],
+        msg_on_curve: &Self::Other,
+    ) -> Result<bool, VerificationError> {
+        let g2 = G2Affine::generator();
+        let sigma = match g1_from_variable(signature) {
+            Ok(sigma) => sigma,
+            Err(err) => {
+                return Err(VerificationError::InvalidPoint {
+                    field: "signature".into(),
+                    msg: err.to_string(),
+                })
+            }
+        };
+        let s = (self.0).0;
+        Ok(fast_pairing_equality(&sigma, &g2, &msg_on_curve.0, &s))
+    }
+}
+
+/// The pubkey type for drand networks with scheme ID bls-unchained-g1-rfc9380.
+pub struct G2PubkeyRfc(G2);
+
+impl Pubkey for G2PubkeyRfc {
+    type This = G2;
+    type ThisCompressed = [u8; 96];
+    type Other = G1;
+
+    fn msg_to_curve(msg: &[u8]) -> Self::Other {
+        let g: G1Projective =
+            HashToCurve::<ExpandMsgXmd<sha2::Sha256>>::hash_to_curve(msg, DOMAIN_HASH_TO_G1);
         G1(g.into())
     }
 
@@ -313,6 +370,30 @@ mod tests {
         // https://api3.drand.sh/dbd506d6ef76e5f386f41c651dcb808c5bcbd75471cc4eafa3f4df7ad4e4c493/public/23456
         let signature = hex::decode("98401ef9833e75bf06fda3243e4fcf6d075d62b45c2a59d26df5d5fcbdfd0c14ee89fc035abd5528a8c25b68fbecae65").unwrap();
         let round: u64 = 23456;
+        let result = pk.verify(round, b"", &signature).unwrap();
+        assert!(result);
+    }
+
+    #[test]
+    fn verify_works_for_g1g2_swapped_rfc() {
+        // Test vectors (Public key for G1/G2 swaped) provided by Yolan Romailler
+        // https://gist.github.com/webmaster128/43dbd8726bd00c1252c72ae74ca3d220
+
+        const PK_HEX: [u8; 96] = hex!("a1ee12542360bf75742bcade13d6134e7d5283d9eb782887c47d3d9725f05805d37b0106b7f744395bf82c175dd7434a169e998f188a657a030d588892c0cd2c01f996aaf331c4d8bc5b9734bbe261d09e7d2d39ef88b635077f262bd7bbb30f");
+        let pk = G2PubkeyRfc::from_fixed(PK_HEX).unwrap();
+
+        let signature = hex::decode("b98dae74f6a9d2ec79d75ba273dcfda86a45d589412860eb4c0fd056b00654dbf667c1b6884987c9aee0d43f8ba9db52").unwrap();
+        let round: u64 = 3;
+        let result = pk.verify(round, b"", &signature).unwrap();
+        assert!(result);
+
+        let signature = hex::decode("962c2b2969e8f3351cf5cc457b04ecbf0c65bd79f4c1ee3bd0205f581368aaaa0cdeb1531a0709d39ef06a8ba1e1bb93").unwrap();
+        let round: u64 = 4;
+        let result = pk.verify(round, b"", &signature).unwrap();
+        assert!(result);
+
+        let signature = hex::decode("a054dafb27a4a4fb9e06b17b30da3e0c7b13b4ca8e1dec3c6775f81758587029aa358523f2e7e62204018347db7cbd1c").unwrap();
+        let round: u64 = 6;
         let result = pk.verify(round, b"", &signature).unwrap();
         assert!(result);
     }

@@ -13,6 +13,7 @@ This can be used by other crates or be compiled to a Wasm blob (< 500 kilobytes)
 - Supports [unchained mode] ✅
 - G1/G2 swap ✅
 - API does not expose types of the BLS implementation ✅
+- Supports [quicknet] ([bls-unchained-g1-rfc9380]) ✅
 
 Next up:
 
@@ -25,6 +26,8 @@ The following things are intentionally unsupported:
 
 [pairing]: https://crates.io/crates/pairing
 [unchained mode]: https://drand.love/blog/2022/02/21/multi-frequency-support-and-timelock-encryption-capabilities/
+[quicknet]: https://drand.love/blog/2023/07/03/fastnet-sunset-quicknet-new/
+[bls-unchained-g1-rfc9380]: https://github.com/drand/drand/pull/1249
 
 ## Development
 
