@@ -13,6 +13,7 @@ crate-type = ["cdylib", "rlib"]
 [features]
 js = ["hex", "wasm-bindgen"]
 arkworks = ["ark-bls12-381", "ark-ec", "ark-ff", "ark-serialize", "sha2_v10"]
+arkworks-asm = ["arkworks", "ark-ff/asm"]
 zkcrypto = ["pairing", "bls12_381", "sha2_v9"]
 default = ["zkcrypto"]
 

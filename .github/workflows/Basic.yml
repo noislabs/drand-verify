@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        bls_lib: [zkcrypto, arkworks]
+        bls_lib: [zkcrypto, arkworks, arkworks-asm]
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2

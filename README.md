@@ -107,6 +107,9 @@ cargo +nightly bench bench_ --no-default-features --features zkcrypto
 
 # Using arkworks
 cargo +nightly bench bench_ --no-default-features --features arkworks
+
+# Using arkworks(+asm) (see https://hackmd.io/@gnark/eccbench)
+RUSTFLAGS="-C target-feature=+bmi2,+adx" cargo +nightly bench bench_ --no-default-features --features arkworks-asm
 ```
 
 Results on an Apple M1 Pro with Rust 1.72.0-nightly:
@@ -115,6 +118,7 @@ Results on an Apple M1 Pro with Rust 1.72.0-nightly:
 | ------------------ | --------------- | -------- |
 | zkcrypto           | 1.956 ms        | 1.489 ms |
 | arkworks           | 1.714 ms        | 1.425 ms |
+| arkworks(+asm)     | 1.712 ms        | 1.424 ms |
 
 ## License
 
