@@ -16,9 +16,6 @@ jobs:
     strategy:
       matrix:
         bls_lib: [zkcrypto, arkworks, arkworks-asm]
-        include:
-          - bls_lib: arkworks-asm
-            rustflags: RUSTFLAGS="-C target-feature=+bmi2,+adx"
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
@@ -63,6 +60,9 @@ jobs:
     strategy:
       matrix:
         bls_lib: [zkcrypto, arkworks, arkworks-asm]
+        include:
+          - bls_lib: arkworks-asm
+            rustflags: RUSTFLAGS="-C target-feature=+bmi2,+adx"
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
