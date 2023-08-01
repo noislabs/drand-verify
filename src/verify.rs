@@ -1,11 +1,19 @@
-use bls12_381::{
-    hash_to_curve::{ExpandMsgXmd, HashToCurve},
-    Bls12, G1Affine, G1Projective, G2Affine, G2Prepared, G2Projective,
-};
-use pairing::{group::Group, MultiMillerLoop};
-use sha2::{Digest, Sha256};
 use std::error::Error;
 use std::fmt;
+
+#[cfg(feature = "arkworks")]
+use crate::verify_arkworks::*;
+#[cfg(not(feature = "arkworks"))]
+use crate::verify_zkcrypro::*;
+#[cfg(feature = "arkworks")]
+use sha2_v10::{Digest, Sha256};
+#[cfg(not(feature = "arkworks"))]
+use sha2_v9::{Digest, Sha256};
+
+#[cfg(feature = "arkworks")]
+use ark_bls12_381::{G1Affine, G2Affine};
+#[cfg(not(feature = "arkworks"))]
+use bls12_381::{G1Affine, G2Affine};
 
 use crate::points::{
     g1_from_fixed, g1_from_fixed_unchecked, g1_from_variable, g2_from_fixed,
@@ -73,9 +81,7 @@ impl Pubkey for G1Pubkey {
     type Other = G2;
 
     fn msg_to_curve(msg: &[u8]) -> Self::Other {
-        let g: G2Projective =
-            HashToCurve::<ExpandMsgXmd<sha2::Sha256>>::hash_to_curve(msg, DOMAIN_HASH_TO_G2);
-        G2(g.into())
+        G2(hash_to_curve_g2(msg, DOMAIN_HASH_TO_G2))
     }
 
     fn from_fixed(data: [u8; 48]) -> Result<Self, InvalidPoint> {
@@ -97,7 +103,7 @@ impl Pubkey for G1Pubkey {
         signature: &[u8],
         msg_on_curve: &Self::Other,
     ) -> Result<bool, VerificationError> {
-        let g1 = G1Affine::generator();
+        let g1 = g1_generator();
         let sigma = match g2_from_variable(signature) {
             Ok(sigma) => sigma,
             Err(err) => {
@@ -123,9 +129,7 @@ impl Pubkey for G2Pubkey {
     fn msg_to_curve(msg: &[u8]) -> Self::Other {
         // The usage of DOMAIN_HASH_TO_G2 here is needed to be compatible to a bug in drand's fastnet.
         // See https://github.com/noislabs/drand-verify/pull/22 for more information about that topic.
-        let g: G1Projective =
-            HashToCurve::<ExpandMsgXmd<sha2::Sha256>>::hash_to_curve(msg, DOMAIN_HASH_TO_G2);
-        G1(g.into())
+        G1(hash_to_curve_g1(msg, DOMAIN_HASH_TO_G2))
     }
 
     fn from_fixed(data: [u8; 96]) -> Result<Self, InvalidPoint> {
@@ -147,7 +151,7 @@ impl Pubkey for G2Pubkey {
         signature: &[u8],
         msg_on_curve: &Self::Other,
     ) -> Result<bool, VerificationError> {
-        let g2 = G2Affine::generator();
+        let g2 = g2_generator();
         let sigma = match g1_from_variable(signature) {
             Ok(sigma) => sigma,
             Err(err) => {
@@ -171,9 +175,7 @@ impl Pubkey for G2PubkeyRfc {
     type Other = G1;
 
     fn msg_to_curve(msg: &[u8]) -> Self::Other {
-        let g: G1Projective =
-            HashToCurve::<ExpandMsgXmd<sha2::Sha256>>::hash_to_curve(msg, DOMAIN_HASH_TO_G1);
-        G1(g.into())
+        G1(hash_to_curve_g1(msg, DOMAIN_HASH_TO_G1))
     }
 
     fn from_fixed(data: [u8; 96]) -> Result<Self, InvalidPoint> {
@@ -195,7 +197,7 @@ impl Pubkey for G2PubkeyRfc {
         signature: &[u8],
         msg_on_curve: &Self::Other,
     ) -> Result<bool, VerificationError> {
-        let g2 = G2Affine::generator();
+        let g2 = g2_generator();
         let sigma = match g1_from_variable(signature) {
             Ok(sigma) => sigma,
             Err(err) => {
@@ -226,26 +228,6 @@ impl fmt::Display for VerificationError {
 }
 
 impl Error for VerificationError {}
-
-/// Checks if e(p, q) == e(r, s)
-///
-/// See https://hackmd.io/@benjaminion/bls12-381#Final-exponentiation.
-///
-/// Optimized by this trick:
-///   Instead of doing e(a,b) (in G2) multiplied by e(-c,d) (in G2)
-///   (which is costly is to multiply in G2 because these are very big numbers)
-///   we can do FinalExponentiation(MillerLoop( [a,b], [-c,d] )) which is the same
-///   in an optimized way.
-fn fast_pairing_equality(p: &G1Affine, q: &G2Affine, r: &G1Affine, s: &G2Affine) -> bool {
-    let minus_p = -p;
-    // "some number of (G1, G2) pairs" are the inputs of the miller loop
-    let pair1 = (&minus_p, &G2Prepared::from(*q));
-    let pair2 = (r, &G2Prepared::from(*s));
-    let looped = Bls12::multi_miller_loop(&[pair1, pair2]);
-    // let looped = Bls12::miller_loop([&pair1, &pair2]);
-    let value = looped.final_exponentiation();
-    value.is_identity().into()
-}
 
 fn message(current_round: u64, prev_sig: &[u8]) -> Vec<u8> {
     let mut hasher = Sha256::default();

@@ -1,5 +1,10 @@
 use std::fmt;
 
+#[cfg(feature = "arkworks")]
+use ark_bls12_381::{G1Affine, G2Affine};
+#[cfg(feature = "arkworks")]
+use ark_serialize::CanonicalDeserialize;
+#[cfg(not(feature = "arkworks"))]
 use bls12_381::{G1Affine, G2Affine};
 
 #[derive(Debug)]
@@ -48,22 +53,42 @@ pub fn g2_from_variable(data: &[u8]) -> Result<G2Affine, InvalidPoint> {
 }
 
 pub fn g1_from_fixed(data: [u8; 48]) -> Result<G1Affine, InvalidPoint> {
+    #[cfg(feature = "arkworks")]
+    {
+        G1Affine::deserialize_compressed(&data[..]).map_err(|_| InvalidPoint::DecodingError {})
+    }
+    #[cfg(not(feature = "arkworks"))]
     Option::from(G1Affine::from_compressed(&data)).ok_or(InvalidPoint::DecodingError {})
 }
 
 /// Like [`g1_from_fixed`] without guaranteeing that the encoding represents a valid element.
 /// Only use this when you know for sure the encoding is correct.
 pub fn g1_from_fixed_unchecked(data: [u8; 48]) -> Result<G1Affine, InvalidPoint> {
+    #[cfg(feature = "arkworks")]
+    {
+        G1Affine::deserialize_compressed(&data[..]).map_err(|_| InvalidPoint::DecodingError {})
+    }
+    #[cfg(not(feature = "arkworks"))]
     Option::from(G1Affine::from_compressed_unchecked(&data)).ok_or(InvalidPoint::DecodingError {})
 }
 
 pub fn g2_from_fixed(data: [u8; 96]) -> Result<G2Affine, InvalidPoint> {
+    #[cfg(feature = "arkworks")]
+    {
+        G2Affine::deserialize_compressed(&data[..]).map_err(|_| InvalidPoint::DecodingError {})
+    }
+    #[cfg(not(feature = "arkworks"))]
     Option::from(G2Affine::from_compressed(&data)).ok_or(InvalidPoint::DecodingError {})
 }
 
 /// Like [`g2_from_fixed`] without guaranteeing that the encoding represents a valid element.
 /// Only use this when you know for sure the encoding is correct.
 pub fn g2_from_fixed_unchecked(data: [u8; 96]) -> Result<G2Affine, InvalidPoint> {
+    #[cfg(feature = "arkworks")]
+    {
+        G2Affine::deserialize_compressed(&data[..]).map_err(|_| InvalidPoint::DecodingError {})
+    }
+    #[cfg(not(feature = "arkworks"))]
     Option::from(G2Affine::from_compressed_unchecked(&data)).ok_or(InvalidPoint::DecodingError {})
 }
 

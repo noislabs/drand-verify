@@ -1,4 +1,7 @@
-use sha2::{Digest, Sha256};
+#[cfg(feature = "arkworks")]
+use sha2_v10::{Digest, Sha256};
+#[cfg(not(feature = "arkworks"))]
+use sha2_v9::{Digest, Sha256};
 
 /// Derives a 32 byte randomness from the beacon's signature
 pub fn derive_randomness(signature: &[u8]) -> [u8; 32] {
