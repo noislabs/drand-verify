@@ -38,6 +38,12 @@ jobs:
           command: build
           args: --locked --features ${{ matrix.bls_lib }},js
 
+      - name: Build Wasm
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --locked --lib --target wasm32-unknown-unknown --features ${{ matrix.bls_lib }}
+
       - name: Run unit tests
         uses: actions-rs/cargo@v1
         with:
