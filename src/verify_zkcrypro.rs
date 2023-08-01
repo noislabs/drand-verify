@@ -4,13 +4,13 @@ use pairing::{group::Group, MultiMillerLoop};
 use sha2_v9::Sha256;
 
 pub fn hash_to_curve_g1(msg: &[u8], dst: &[u8]) -> G1Affine {
-    let g: G1Projective = HashToCurve::<ExpandMsgXmd<Sha256>>::hash_to_curve(msg, dst);
-    g.into()
+    let p: G1Projective = HashToCurve::<ExpandMsgXmd<Sha256>>::hash_to_curve(msg, dst);
+    p.into()
 }
 
 pub fn hash_to_curve_g2(msg: &[u8], dst: &[u8]) -> G2Affine {
-    let g: G2Projective = HashToCurve::<ExpandMsgXmd<Sha256>>::hash_to_curve(msg, dst);
-    g.into()
+    let p: G2Projective = HashToCurve::<ExpandMsgXmd<Sha256>>::hash_to_curve(msg, dst);
+    p.into()
 }
 
 /// Checks if e(p, q) == e(r, s)
