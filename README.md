@@ -14,10 +14,11 @@ This can be used by other crates or be compiled to a Wasm blob (< 500 kilobytes)
 - G1/G2 swap ✅
 - API does not expose types of the BLS implementation ✅
 - Supports [quicknet] ([bls-unchained-g1-rfc9380]) ✅
+- Multiple BLS12-381 implementations: zkcrypto (default), arkworks ✅
 
 Next up:
 
-- Add alternative BLS12-381 implementation (especially [blst](https://github.com/supranational/blst))
+- Add [blst](https://github.com/supranational/blst) support
 
 The following things are intentionally unsupported:
 
