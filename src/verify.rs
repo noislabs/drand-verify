@@ -16,8 +16,8 @@ use ark_bls12_381::{G1Affine, G2Affine};
 use bls12_381::{G1Affine, G2Affine};
 
 use crate::points::{
-    g1_from_fixed, g1_from_fixed_unchecked, g1_from_variable, g2_from_fixed,
-    g2_from_fixed_unchecked, g2_from_variable, InvalidPoint,
+    g1_from_fixed, g1_from_fixed_unchecked, g1_from_variable, g1_generator, g2_from_fixed,
+    g2_from_fixed_unchecked, g2_from_variable, g2_generator, InvalidPoint,
 };
 
 // See https://github.com/drand/kyber-bls12381/issues/22 and

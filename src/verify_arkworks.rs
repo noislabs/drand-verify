@@ -4,7 +4,6 @@ use ark_ec::{
     hashing::{curve_maps::wb::WBMap, map_to_curve_hasher::MapToCurveBasedHasher, HashToCurve},
     models::short_weierstrass,
     pairing::Pairing,
-    AffineRepr,
 };
 use ark_ff::{field_hashers::DefaultFieldHasher, Zero};
 use sha2_v10::Sha256;
@@ -45,12 +44,4 @@ pub fn fast_pairing_equality(p: &G1Affine, q: &G2Affine, r: &G1Affine, s: &G2Aff
     let looped = Bls12::<ark_bls12_381::Config>::multi_miller_loop([minus_p, *r], [*q, *s]);
     let value = Bls12::final_exponentiation(looped);
     value.unwrap().is_zero()
-}
-
-pub fn g1_generator() -> G1Affine {
-    G1Affine::generator()
-}
-
-pub fn g2_generator() -> G2Affine {
-    G2Affine::generator()
 }

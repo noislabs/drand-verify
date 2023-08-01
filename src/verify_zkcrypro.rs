@@ -32,11 +32,3 @@ pub fn fast_pairing_equality(p: &G1Affine, q: &G2Affine, r: &G1Affine, s: &G2Aff
     let value = looped.final_exponentiation();
     value.is_identity().into()
 }
-
-pub fn g1_generator() -> G1Affine {
-    G1Affine::generator()
-}
-
-pub fn g2_generator() -> G2Affine {
-    G2Affine::generator()
-}

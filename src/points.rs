@@ -92,6 +92,22 @@ pub fn g2_from_fixed_unchecked(data: [u8; 96]) -> Result<G2Affine, InvalidPoint>
     Option::from(G2Affine::from_compressed_unchecked(&data)).ok_or(InvalidPoint::DecodingError {})
 }
 
+/// Constructs a generator in G1
+#[inline]
+pub fn g1_generator() -> G1Affine {
+    #[cfg(feature = "arkworks")]
+    use ark_ec::AffineRepr;
+    G1Affine::generator()
+}
+
+/// Constructs a generator in G2
+#[inline]
+pub fn g2_generator() -> G2Affine {
+    #[cfg(feature = "arkworks")]
+    use ark_ec::AffineRepr;
+    G2Affine::generator()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
