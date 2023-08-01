@@ -1,6 +1,11 @@
 # Based on https://github.com/actions-rs/example/blob/master/.github/workflows/quickstart.yml
 
-on: [push, pull_request]
+# Pushes to long living branches and all PRs
+on:
+  push:
+    branches:
+      - main
+  pull_request:
 
 name: Basic
 
