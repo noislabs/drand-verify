@@ -94,6 +94,28 @@ $ ls ./pkg
 
 for browsers. Please refer to the wasm-bindgen handbook [to learn more about targets](https://rustwasm.github.io/docs/wasm-bindgen/reference/deployment.html).
 
+## Benchmarks
+
+We benchmark a single drand beacon verification for various networks. Running the benchmarks:
+
+```sh
+# default features (currently zkcrypto)
+cargo +nightly bench bench_
+
+# Using zkcrypto
+cargo +nightly bench bench_ --no-default-features --features zkcrypto
+
+# Using arkworks
+cargo +nightly bench bench_ --no-default-features --features arkworks
+```
+
+Results on an Apple M1 Pro with Rust 1.72.0-nightly:
+
+| BLS implementation | Classic mainnet | Fastnet  |
+| ------------------ | --------------- | -------- |
+| zkcrypto           | 1.958 ms        | 1.489 ms |
+| arkworks           | 1.748 ms        | 1.452 ms |
+
 ## License
 
 Apache 2.0, see [LICENSE](./LICENSE) and [NOTICE](./NOTICE)
