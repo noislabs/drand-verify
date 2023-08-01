@@ -229,11 +229,11 @@ impl fmt::Display for VerificationError {
 
 impl Error for VerificationError {}
 
-fn message(current_round: u64, prev_sig: &[u8]) -> Vec<u8> {
+fn message(current_round: u64, prev_sig: &[u8]) -> [u8; 32] {
     let mut hasher = Sha256::default();
     hasher.update(prev_sig);
     hasher.update(round_to_bytes(current_round));
-    hasher.finalize().to_vec()
+    hasher.finalize().into()
 }
 
 /// https://github.com/drand/drand-client/blob/master/wasm/chain/verify.go#L28-L33

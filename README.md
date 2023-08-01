@@ -113,8 +113,8 @@ Results on an Apple M1 Pro with Rust 1.72.0-nightly:
 
 | BLS implementation | Classic mainnet | Fastnet  |
 | ------------------ | --------------- | -------- |
-| zkcrypto           | 1.958 ms        | 1.489 ms |
-| arkworks           | 1.748 ms        | 1.452 ms |
+| zkcrypto           | 1.956 ms        | 1.489 ms |
+| arkworks           | 1.714 ms        | 1.425 ms |
 
 ## License
 
