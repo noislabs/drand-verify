@@ -21,10 +21,10 @@ jobs:
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1
         with:
-          profile: minimal
           toolchain: 1.69.0
+          profile: minimal
           target: wasm32-unknown-unknown
-          override: true
+          default: true
 
       - name: Build
         uses: actions-rs/cargo@v1
@@ -61,6 +61,7 @@ jobs:
         with:
           toolchain: nightly
           profile: minimal
+          default: true
 
       - name: Set RUSTFLAGS
         if: ${{ matrix.rustflags }}
@@ -82,10 +83,10 @@ jobs:
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1
         with:
-          profile: minimal
           toolchain: 1.69.0
+          profile: minimal
           target: wasm32-unknown-unknown
-          override: true
+          default: true
 
       - name: Build all
         uses: actions-rs/cargo@v1
@@ -109,10 +110,10 @@ jobs:
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1
         with:
-          profile: minimal
           toolchain: 1.69.0
-          override: true
+          profile: minimal
           components: rustfmt, clippy
+          default: true
 
       - name: Run cargo fmt
         uses: actions-rs/cargo@v1
