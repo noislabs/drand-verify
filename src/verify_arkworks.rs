@@ -10,23 +10,23 @@ use sha2_v10::Sha256;
 use std::ops::Neg;
 
 pub fn hash_to_curve_g1(msg: &[u8], dst: &[u8]) -> G1Affine {
-    let mapper = MapToCurveBasedHasher::<
+    let hasher = MapToCurveBasedHasher::<
         short_weierstrass::Projective<g1::Config>,
         DefaultFieldHasher<Sha256, 128>,
         WBMap<g1::Config>,
     >::new(dst)
-    .expect("cannot initialise mapper for sha2 to BLS12-381 G1");
-    mapper.hash(msg).expect("hash cannot be mapped to G1")
+    .expect("Creating BLS12-381 (G1) hasher failed");
+    hasher.hash(msg).expect("hash cannot be mapped to G1")
 }
 
 pub fn hash_to_curve_g2(msg: &[u8], dst: &[u8]) -> G2Affine {
-    let mapper = MapToCurveBasedHasher::<
+    let hasher = MapToCurveBasedHasher::<
         short_weierstrass::Projective<g2::Config>,
         DefaultFieldHasher<Sha256, 128>,
         WBMap<g2::Config>,
     >::new(dst)
-    .expect("cannot initialise mapper for sha2 to BLS12-381 G2");
-    mapper.hash(msg).expect("hash cannot be mapped to G2")
+    .expect("Creating BLS12-381 (G2) hasher failed");
+    hasher.hash(msg).expect("hash cannot be mapped to G2")
 }
 
 /// Checks if e(p, q) == e(r, s)
