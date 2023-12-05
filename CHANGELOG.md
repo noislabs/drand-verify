@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Rename `G2Pubkey` to `G2PubkeyFastnet` and make `G2Pubkey` an alias of `G2PubkeyFastnet`.
+  Deprecate `G2Pubkey`. Please use either `G2PubkeyFastnet` or `G2PubkeyRfc` explicitly from now on.
+
 ## [0.6.1] - 2023-07-19
 
 ### Added
