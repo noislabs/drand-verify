@@ -65,6 +65,46 @@ pub trait Pubkey: Sized {
 }
 
 /// The pubkey type for drand networks with scheme ID pedersen-bls-chained or pedersen-bls-unchained.
+///
+/// ## Examples
+///
+/// Classic mainnet
+///
+/// ```
+/// use hex_literal::hex;
+/// use drand_verify::{G1Pubkey, Pubkey};
+///
+/// /// Public key of classic League of Entropy Mainnet (curl -sS https://drand.cloudflare.com/info)
+/// const PK_LEO_MAINNET: [u8; 48] = hex!("868f005eb8e6e4ca0a47c8a77ceaa5309a47978a7c71bc5cce96366b5d7a569937c529eeda66c7293784a9402801af31");
+///
+/// let pk = G1Pubkey::from_fixed(PK_LEO_MAINNET).unwrap();
+///
+/// // curl -sS https://drand.cloudflare.com/public/72785
+/// let previous_signature = hex::decode("a609e19a03c2fcc559e8dae14900aaefe517cb55c840f6e69bc8e4f66c8d18e8a609685d9917efbfb0c37f058c2de88f13d297c7e19e0ab24813079efe57a182554ff054c7638153f9b26a60e7111f71a0ff63d9571704905d3ca6df0b031747").unwrap();
+/// let signature = hex::decode("82f5d3d2de4db19d40a6980e8aa37842a0e55d1df06bd68bddc8d60002e8e959eb9cfa368b3c1b77d18f02a54fe047b80f0989315f83b12a74fd8679c4f12aae86eaf6ab5690b34f1fddd50ee3cc6f6cdf59e95526d5a5d82aaa84fa6f181e42").unwrap();
+/// let round: u64 = 72785;
+///
+/// let result = pk.verify(round, &previous_signature, &signature).unwrap();
+/// assert!(result);
+/// ```
+///
+/// Use empty `previous_signature` for unchained mode:
+///
+/// ```
+/// # use hex_literal::hex;
+/// # use drand_verify::{G1Pubkey, Pubkey};
+/// /// Public key League of Entropy Mainnet (curl -sS https://pl-us.testnet.drand.sh/7672797f548f3f4748ac4bf3352fc6c6b6468c9ad40ad456a397545c6e2df5bf/info)
+/// const PK_UNCHAINED_TESTNET: [u8; 48] = hex!("8200fc249deb0148eb918d6e213980c5d01acd7fc251900d9260136da3b54836ce125172399ddc69c4e3e11429b62c11");
+/// let pk = G1Pubkey::from_fixed(PK_UNCHAINED_TESTNET).unwrap();
+///
+/// // curl -sS https://pl-us.testnet.drand.sh/7672797f548f3f4748ac4bf3352fc6c6b6468c9ad40ad456a397545c6e2df5bf/public/223344
+/// let signature = hex::decode("94f6b85df7cce7237e8e7df66d794ddad092de5d8bb6a791b97e905aa89852e506ac36a792eba7021e22eebf34891f8914bf9a8dd9233ea0a4c5ca00ef8404999f899073dd2eade61fe54077fee8168f83dcb61a758b6883b38904054e64a433").unwrap();
+/// let round: u64 = 223344;
+///
+/// // Note empty argument here
+/// let result = pk.verify(round, b"", &signature).unwrap();
+/// assert!(result);
+/// ```
 pub struct G1Pubkey(G1);
 
 impl Pubkey for G1Pubkey {
@@ -173,6 +213,24 @@ impl Pubkey for G2PubkeyFastnet {
 }
 
 /// The pubkey type for drand networks with scheme ID bls-unchained-g1-rfc9380.
+///
+/// ## Examples
+///
+/// Quicknet verification
+///
+/// ```
+/// use hex_literal::hex;
+/// use drand_verify::{G2PubkeyRfc, Pubkey};
+///
+/// const PK_QUICKNET: [u8; 96] = hex!("83cf0f2896adee7eb8b5f01fcad3912212c437e0073e911fb90022d3e760183c8c4b450b6a0a6c3ac6a5776a2d1064510d1fec758c921cc22b0e17e63aaf4bcb5ed66304de9cf809bd274ca73bab4af5a6e9c76a4bc09e76eae8991ef5ece45a");
+/// let pk = G2PubkeyRfc::from_fixed(PK_QUICKNET).unwrap();
+///
+/// // https://api3.drand.sh/52db9ba70e0cc0f6eaf7803dd07447a1f5477735fd3f661792ba94600c84e971/public/123
+/// let signature = hex::decode("b75c69d0b72a5d906e854e808ba7e2accb1542ac355ae486d591aa9d43765482e26cd02df835d3546d23c4b13e0dfc92").unwrap();
+/// let round: u64 = 123;
+/// let result = pk.verify(round, b"", &signature).unwrap();
+/// assert!(result);
+/// ```
 pub struct G2PubkeyRfc(G2);
 
 impl Pubkey for G2PubkeyRfc {
