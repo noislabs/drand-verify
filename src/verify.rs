@@ -112,10 +112,20 @@ impl Pubkey for G1Pubkey {
     }
 }
 
-/// The pubkey type for drand networks with scheme ID bls-unchained-on-g1.
-pub struct G2Pubkey(G2);
+#[deprecated(
+    note = "Use G2PubkeyFastnet for drand networks with scheme ID bls-unchained-on-g1 or G2PubkeyRfc for drand networks with scheme ID bls-unchained-g1-rfc9380. G2Pubkey will be removed at some point and later re-introduced as an alias for G2PubkeyRfc."
+)]
+pub type G2Pubkey = G2PubkeyFastnet;
 
-impl Pubkey for G2Pubkey {
+/// The pubkey type for drand networks with scheme ID bls-unchained-on-g1.
+///
+/// This includes primarily the "fastnet" launched as a mainnet on March 1st, 2023
+/// but also "testnet-g".
+/// Please note that fastnet is deprecated and will be shut down:
+/// <https://drand.love/blog/2023/07/03/fastnet-sunset-quicknet-new/>
+pub struct G2PubkeyFastnet(G2);
+
+impl Pubkey for G2PubkeyFastnet {
     type This = G2;
     type ThisCompressed = [u8; 96];
     type Other = G1;
@@ -330,71 +340,90 @@ mod tests {
     #[test]
     fn verify_works_for_g1g2_swapped() {
         // Test vectors (Public key for G1/G2 swaped) provided by Yolan Romailler
-        const PK_HEX: [u8; 96] = hex!("876f6fa8073736e22f6ff4badaab35c637503718f7a452d178ce69c45d2d8129a54ad2f988ab10c9666f87ab603c59bf013409a5b500555da31720f8eec294d9809b8796f40d5372c71a44ca61226f1eb978310392f98074a608747f77e66c5a");
-        let pk = G2Pubkey::from_fixed(PK_HEX).unwrap();
+        {
+            const PK_LOCAL: [u8; 96] = hex!("876f6fa8073736e22f6ff4badaab35c637503718f7a452d178ce69c45d2d8129a54ad2f988ab10c9666f87ab603c59bf013409a5b500555da31720f8eec294d9809b8796f40d5372c71a44ca61226f1eb978310392f98074a608747f77e66c5a");
+            let pk = G2PubkeyFastnet::from_fixed(PK_LOCAL).unwrap();
 
-        let signature = hex::decode("ac7c3ca14bc88bd014260f22dc016b4fe586f9313c3a549c83d195811a99a5d2d4999d4df6daec73ff51fafadd6d5bb5").unwrap();
-        let round: u64 = 3;
-        let result = pk.verify(round, b"", &signature).unwrap();
-        assert!(result);
+            let signature = hex::decode("ac7c3ca14bc88bd014260f22dc016b4fe586f9313c3a549c83d195811a99a5d2d4999d4df6daec73ff51fafadd6d5bb5").unwrap();
+            let round: u64 = 3;
+            let result = pk.verify(round, b"", &signature).unwrap();
+            assert!(result);
 
-        let signature = hex::decode("b4448d565ccad16beb6502f0cf84b4b8d4a67845ba894308a188731b8eb8fc5eb1b5bdcdcd370271436e1475c4786a4e").unwrap();
-        let round: u64 = 4;
-        let result = pk.verify(round, b"", &signature).unwrap();
-        assert!(result);
+            let signature = hex::decode("b4448d565ccad16beb6502f0cf84b4b8d4a67845ba894308a188731b8eb8fc5eb1b5bdcdcd370271436e1475c4786a4e").unwrap();
+            let round: u64 = 4;
+            let result = pk.verify(round, b"", &signature).unwrap();
+            assert!(result);
+        }
 
-        // Tests from https://pl-us.testnet.drand.sh/f3827d772c155f95a9fda8901ddd59591a082df5ac6efe3a479ddb1f5eeb202c/info
-        const PK_HEX2: [u8; 96] = hex!("8f6e58c3dbc6d7e58e32baee6881fecc854161b4227c40b01ae7f0593cea964599648f91a0fa2d6b489a7fb0a552b959014007e05d0c069991be4d064bbe28275bd4c3a3cabf16c48f86f4566909dd6eb6d0e84fd6069c414562ca6abf5fdc13");
-        let pk = G2Pubkey::from_fixed(PK_HEX2).unwrap();
+        // Tests from testnet-g (https://pl-us.testnet.drand.sh/f3827d772c155f95a9fda8901ddd59591a082df5ac6efe3a479ddb1f5eeb202c/info)
+        {
+            const PK_TESTNET_G: [u8; 96] = hex!("8f6e58c3dbc6d7e58e32baee6881fecc854161b4227c40b01ae7f0593cea964599648f91a0fa2d6b489a7fb0a552b959014007e05d0c069991be4d064bbe28275bd4c3a3cabf16c48f86f4566909dd6eb6d0e84fd6069c414562ca6abf5fdc13");
+            let pk = G2PubkeyFastnet::from_fixed(PK_TESTNET_G).unwrap();
 
-        let signature = hex::decode("a7fdfc9c5c31ba96011e89931668239daa368eaf2fbd03fafa38e0c336d0653d921f114b65ceb1a9ef781492d61e0d0a").unwrap();
-        let round: u64 = 375953;
-        let result = pk.verify(round, b"", &signature).unwrap();
-        assert!(result);
+            let signature = hex::decode("a7fdfc9c5c31ba96011e89931668239daa368eaf2fbd03fafa38e0c336d0653d921f114b65ceb1a9ef781492d61e0d0a").unwrap();
+            let round: u64 = 375953;
+            let result = pk.verify(round, b"", &signature).unwrap();
+            assert!(result);
 
-        let signature = hex::decode("b8fe4f9f0fe05a70b027460379d30b02775b7cf625755bf304a94ac2bddb08609fdfbfc23c75c671d6e0a5727392507f").unwrap();
-        let round: u64 = 375965;
-        let result = pk.verify(round, b"", &signature).unwrap();
-        assert!(result);
+            let signature = hex::decode("b8fe4f9f0fe05a70b027460379d30b02775b7cf625755bf304a94ac2bddb08609fdfbfc23c75c671d6e0a5727392507f").unwrap();
+            let round: u64 = 375965;
+            let result = pk.verify(round, b"", &signature).unwrap();
+            assert!(result);
+        }
 
-        // Tests from https://api3.drand.sh/dbd506d6ef76e5f386f41c651dcb808c5bcbd75471cc4eafa3f4df7ad4e4c493/info
-        const PK_HEX3: [u8; 96] = hex!("a0b862a7527fee3a731bcb59280ab6abd62d5c0b6ea03dc4ddf6612fdfc9d01f01c31542541771903475eb1ec6615f8d0df0b8b6dce385811d6dcf8cbefb8759e5e616a3dfd054c928940766d9a5b9db91e3b697e5d70a975181e007f87fca5e");
-        let pk = G2Pubkey::from_fixed(PK_HEX3).unwrap();
+        // Tests from fastnet (https://api3.drand.sh/dbd506d6ef76e5f386f41c651dcb808c5bcbd75471cc4eafa3f4df7ad4e4c493/info)
+        {
+            const PK_FASTNET: [u8; 96] = hex!("a0b862a7527fee3a731bcb59280ab6abd62d5c0b6ea03dc4ddf6612fdfc9d01f01c31542541771903475eb1ec6615f8d0df0b8b6dce385811d6dcf8cbefb8759e5e616a3dfd054c928940766d9a5b9db91e3b697e5d70a975181e007f87fca5e");
+            let pk = G2PubkeyFastnet::from_fixed(PK_FASTNET).unwrap();
 
-        // https://api3.drand.sh/dbd506d6ef76e5f386f41c651dcb808c5bcbd75471cc4eafa3f4df7ad4e4c493/public/1
-        let signature = hex::decode("9544ddce2fdbe8688d6f5b4f98eed5d63eee3902e7e162050ac0f45905a55657714880adabe3c3096b92767d886567d0").unwrap();
-        let round: u64 = 1;
-        let result = pk.verify(round, b"", &signature).unwrap();
-        assert!(result);
+            // https://api3.drand.sh/dbd506d6ef76e5f386f41c651dcb808c5bcbd75471cc4eafa3f4df7ad4e4c493/public/1
+            let signature = hex::decode("9544ddce2fdbe8688d6f5b4f98eed5d63eee3902e7e162050ac0f45905a55657714880adabe3c3096b92767d886567d0").unwrap();
+            let round: u64 = 1;
+            let result = pk.verify(round, b"", &signature).unwrap();
+            assert!(result);
 
-        // https://api3.drand.sh/dbd506d6ef76e5f386f41c651dcb808c5bcbd75471cc4eafa3f4df7ad4e4c493/public/23456
-        let signature = hex::decode("98401ef9833e75bf06fda3243e4fcf6d075d62b45c2a59d26df5d5fcbdfd0c14ee89fc035abd5528a8c25b68fbecae65").unwrap();
-        let round: u64 = 23456;
-        let result = pk.verify(round, b"", &signature).unwrap();
-        assert!(result);
+            // https://api3.drand.sh/dbd506d6ef76e5f386f41c651dcb808c5bcbd75471cc4eafa3f4df7ad4e4c493/public/23456
+            let signature = hex::decode("98401ef9833e75bf06fda3243e4fcf6d075d62b45c2a59d26df5d5fcbdfd0c14ee89fc035abd5528a8c25b68fbecae65").unwrap();
+            let round: u64 = 23456;
+            let result = pk.verify(round, b"", &signature).unwrap();
+            assert!(result);
+        }
     }
 
     #[test]
     fn verify_works_for_g1g2_swapped_rfc() {
         // Test vectors (Public key for G1/G2 swaped) provided by Yolan Romailler
         // https://gist.github.com/webmaster128/43dbd8726bd00c1252c72ae74ca3d220
+        {
+            const PK_HEX: [u8; 96] = hex!("a1ee12542360bf75742bcade13d6134e7d5283d9eb782887c47d3d9725f05805d37b0106b7f744395bf82c175dd7434a169e998f188a657a030d588892c0cd2c01f996aaf331c4d8bc5b9734bbe261d09e7d2d39ef88b635077f262bd7bbb30f");
+            let pk = G2PubkeyRfc::from_fixed(PK_HEX).unwrap();
 
-        const PK_HEX: [u8; 96] = hex!("a1ee12542360bf75742bcade13d6134e7d5283d9eb782887c47d3d9725f05805d37b0106b7f744395bf82c175dd7434a169e998f188a657a030d588892c0cd2c01f996aaf331c4d8bc5b9734bbe261d09e7d2d39ef88b635077f262bd7bbb30f");
-        let pk = G2PubkeyRfc::from_fixed(PK_HEX).unwrap();
+            let signature = hex::decode("b98dae74f6a9d2ec79d75ba273dcfda86a45d589412860eb4c0fd056b00654dbf667c1b6884987c9aee0d43f8ba9db52").unwrap();
+            let round: u64 = 3;
+            let result = pk.verify(round, b"", &signature).unwrap();
+            assert!(result);
 
-        let signature = hex::decode("b98dae74f6a9d2ec79d75ba273dcfda86a45d589412860eb4c0fd056b00654dbf667c1b6884987c9aee0d43f8ba9db52").unwrap();
-        let round: u64 = 3;
-        let result = pk.verify(round, b"", &signature).unwrap();
-        assert!(result);
+            let signature = hex::decode("962c2b2969e8f3351cf5cc457b04ecbf0c65bd79f4c1ee3bd0205f581368aaaa0cdeb1531a0709d39ef06a8ba1e1bb93").unwrap();
+            let round: u64 = 4;
+            let result = pk.verify(round, b"", &signature).unwrap();
+            assert!(result);
 
-        let signature = hex::decode("962c2b2969e8f3351cf5cc457b04ecbf0c65bd79f4c1ee3bd0205f581368aaaa0cdeb1531a0709d39ef06a8ba1e1bb93").unwrap();
-        let round: u64 = 4;
-        let result = pk.verify(round, b"", &signature).unwrap();
-        assert!(result);
+            let signature = hex::decode("a054dafb27a4a4fb9e06b17b30da3e0c7b13b4ca8e1dec3c6775f81758587029aa358523f2e7e62204018347db7cbd1c").unwrap();
+            let round: u64 = 6;
+            let result = pk.verify(round, b"", &signature).unwrap();
+            assert!(result);
+        }
 
-        let signature = hex::decode("a054dafb27a4a4fb9e06b17b30da3e0c7b13b4ca8e1dec3c6775f81758587029aa358523f2e7e62204018347db7cbd1c").unwrap();
-        let round: u64 = 6;
-        let result = pk.verify(round, b"", &signature).unwrap();
-        assert!(result);
+        // Tests from quicknet (https://api.drand.sh/52db9ba70e0cc0f6eaf7803dd07447a1f5477735fd3f661792ba94600c84e971/info)
+        {
+            const PK_QUICKNET: [u8; 96] = hex!("83cf0f2896adee7eb8b5f01fcad3912212c437e0073e911fb90022d3e760183c8c4b450b6a0a6c3ac6a5776a2d1064510d1fec758c921cc22b0e17e63aaf4bcb5ed66304de9cf809bd274ca73bab4af5a6e9c76a4bc09e76eae8991ef5ece45a");
+            let pk = G2PubkeyRfc::from_fixed(PK_QUICKNET).unwrap();
+
+            // https://api3.drand.sh/52db9ba70e0cc0f6eaf7803dd07447a1f5477735fd3f661792ba94600c84e971/public/123
+            let signature = hex::decode("b75c69d0b72a5d906e854e808ba7e2accb1542ac355ae486d591aa9d43765482e26cd02df835d3546d23c4b13e0dfc92").unwrap();
+            let round: u64 = 123;
+            let result = pk.verify(round, b"", &signature).unwrap();
+            assert!(result);
+        }
     }
 }
