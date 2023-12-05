@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.2] - 2023-12-05
+
 ### Changed
 
 - Rename `G2Pubkey` to `G2PubkeyFastnet` and make `G2Pubkey` an alias of `G2PubkeyFastnet`.
@@ -51,7 +53,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Migrate from paired to pairing.
   This increases the code size but reduces the verification cost.
 
-[unreleased]: https://github.com/noislabs/drand-verify/compare/v0.6.1...HEAD
+[unreleased]: https://github.com/noislabs/drand-verify/compare/v0.6.2...HEAD
+[0.6.2]: https://github.com/noislabs/drand-verify/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/noislabs/drand-verify/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/noislabs/drand-verify/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/noislabs/drand-verify/compare/v0.4.0...v0.5.0
