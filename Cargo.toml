@@ -12,11 +12,20 @@ crate-type = ["cdylib", "rlib"]
 
 [features]
 js = ["hex", "wasm-bindgen"]
+arkworks = ["ark-bls12-381", "ark-ec", "ark-ff", "ark-serialize", "sha2_v10"]
+arkworks-asm = ["arkworks", "ark-ff/asm"]
+zkcrypto = ["pairing", "bls12_381", "sha2_v9"]
+default = ["zkcrypto"]
 
 [dependencies]
-pairing = "0.23.0"
-bls12_381 = { version = "0.8.0", features = ["experimental"] }
-sha2 = "0.9.1" # Must be compatible with bls12_381, see https://github.com/zkcrypto/bls12_381/issues/102
+ark-bls12-381 = { version = "0.4.0", optional = true }
+ark-ec = { version = "0.4.2", optional = true }
+ark-ff = { version = "0.4.2", optional = true }
+ark-serialize = { version = "0.4.2", optional = true }
+pairing = { version = "0.23.0", optional = true }
+bls12_381 = { version = "0.8.0", features = ["experimental"], optional = true }
+sha2_v9 = { package = "sha2", version = "0.9.1", optional = true } # Must be compatible with bls12_381, see https://github.com/zkcrypto/bls12_381/issues/102
+sha2_v10 = { package = "sha2", version = "0.10.6", optional = true }
 hex = { version = "0.4", optional = true }
 wasm-bindgen = { version = "0.2.83", optional = true }
 

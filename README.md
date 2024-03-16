@@ -14,10 +14,11 @@ This can be used by other crates or be compiled to a Wasm blob (< 500 kilobytes)
 - G1/G2 swap ✅
 - API does not expose types of the BLS implementation ✅
 - Supports [quicknet] ([bls-unchained-g1-rfc9380]) ✅
+- Multiple BLS12-381 implementations: zkcrypto (default), arkworks ✅
 
 Next up:
 
-- Add alternative BLS12-381 implementation (especially [blst](https://github.com/supranational/blst))
+- Add [blst](https://github.com/supranational/blst) support
 
 The following things are intentionally unsupported:
 
@@ -93,6 +94,32 @@ $ ls ./pkg
 ```
 
 for browsers. Please refer to the wasm-bindgen handbook [to learn more about targets](https://rustwasm.github.io/docs/wasm-bindgen/reference/deployment.html).
+
+## Benchmarks
+
+We benchmark a single drand beacon verification for various networks. Running the benchmarks:
+
+```sh
+# default features (currently zkcrypto)
+cargo +nightly bench bench_
+
+# Using zkcrypto
+cargo +nightly bench bench_ --no-default-features --features zkcrypto
+
+# Using arkworks
+cargo +nightly bench bench_ --no-default-features --features arkworks
+
+# Using arkworks(+asm) (see https://hackmd.io/@gnark/eccbench)
+RUSTFLAGS="-C target-feature=+bmi2,+adx" cargo +nightly bench bench_ --no-default-features --features arkworks-asm
+```
+
+Results on an Apple M1 Pro with Rust 1.72.0-nightly:
+
+| BLS implementation | Classic mainnet | Fastnet  |
+| ------------------ | --------------- | -------- |
+| zkcrypto           | 1.956 ms        | 1.489 ms |
+| arkworks           | 1.714 ms        | 1.425 ms |
+| arkworks(+asm)     | 1.712 ms        | 1.424 ms |
 
 ## License
 

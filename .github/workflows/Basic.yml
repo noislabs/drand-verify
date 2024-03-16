@@ -1,6 +1,11 @@
 # Based on https://github.com/actions-rs/example/blob/master/.github/workflows/quickstart.yml
 
-on: [push, pull_request]
+# Pushes to long living branches and all PRs
+on:
+  push:
+    branches:
+      - main
+  pull_request:
 
 name: Basic
 
@@ -8,6 +13,9 @@ jobs:
   test:
     name: Build and test
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        bls_lib: [zkcrypto, arkworks, arkworks-asm]
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
@@ -15,30 +23,66 @@ jobs:
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1
         with:
+          toolchain: 1.69.0
           profile: minimal
-          toolchain: 1.60.0
           target: wasm32-unknown-unknown
-          override: true
+          default: true
 
-      - name: Build default feature
+      - name: Build
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --locked
+          args: --locked --features ${{ matrix.bls_lib }}
 
-      - name: Build js feature
+      - name: Build with js feature
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --locked --features js
+          args: --locked --features ${{ matrix.bls_lib }},js
+
+      - name: Build Wasm
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --locked --lib --target wasm32-unknown-unknown --features ${{ matrix.bls_lib }}
 
       - name: Run unit tests
         uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --locked
+          args: --locked --features ${{ matrix.bls_lib }}
         env:
           RUST_BACKTRACE: 1
+
+  bench:
+    name: Benchmarks
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        bls_lib: [zkcrypto, arkworks, arkworks-asm]
+        include:
+          - bls_lib: arkworks-asm
+            rustflags: RUSTFLAGS="-C target-feature=+bmi2,+adx"
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Install nightly toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          profile: minimal
+          default: true
+
+      - name: Set RUSTFLAGS
+        if: ${{ matrix.rustflags }}
+        run: echo ${{ matrix.rustflags }} >> $GITHUB_ENV
+
+      - name: Run Benchmarks
+        uses: actions-rs/cargo@v1
+        with:
+          command: bench
+          args: bench_ --no-default-features --features ${{ matrix.bls_lib }}
 
   examples:
     name: Build and run examples
@@ -50,10 +94,10 @@ jobs:
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1
         with:
+          toolchain: 1.69.0
           profile: minimal
-          toolchain: 1.60.0
           target: wasm32-unknown-unknown
-          override: true
+          default: true
 
       - name: Build all
         uses: actions-rs/cargo@v1
@@ -77,10 +121,10 @@ jobs:
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1
         with:
+          toolchain: 1.69.0
           profile: minimal
-          toolchain: 1.60.0
-          override: true
           components: rustfmt, clippy
+          default: true
 
       - name: Run cargo fmt
         uses: actions-rs/cargo@v1
